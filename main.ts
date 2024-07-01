@@ -4,7 +4,7 @@ import { range } from "taichi.js/dist/taichi";
 let main = async () => {
   await ti.init();
 
-  const n = 200;
+  const n = 100;
   const points = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
   const pixels = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
 
@@ -113,6 +113,7 @@ let main = async () => {
   let i = 0;
   async function frame() {
     i = i + 1;
+    analysisPoints.set([0],[n*2*Math.sin(i/50),n*2*Math.cos(i/50)] );
     kernel(i);
     canvas.setImage(pixels);
     requestAnimationFrame(frame);
