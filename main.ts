@@ -4,15 +4,20 @@ import { range } from "taichi.js/dist/taichi";
 let main = async () => {
   await ti.init();
 
-  const n = 100;
+  const n = 200;
   const points = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
   const pixels = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
 
-  for (let i of ti.ndrange(n,n)) {
-    points.set(i,[...i,0.] );
+  for (let i of ti.ndrange(n, n)) {
+    points.set(i, [...i, 0]);
   }
 
-  const Rectangle = ti.types.struct({xMin: ti.f32, xMax: ti.f32, yMin: ti.f32, yMax: ti.f32})
+  const Rectangle = ti.types.struct({
+    xMin: ti.f32,
+    xMax: ti.f32,
+    yMin: ti.f32,
+    yMax: ti.f32,
+  });
   const rectangleCount = 100;
   const rectangles = ti.field(Rectangle, [rectangleCount]);
 
@@ -21,40 +26,62 @@ let main = async () => {
     const xMax = xMin + 5;
     const yMin = Math.max(0, Math.random() * n - 5);
     const yMax = yMin + 5;
-    const struct = {xMin, xMax, yMin, yMax};
+    const struct = { xMin, xMax, yMin, yMax };
     rectangles.set([i], struct);
   }
 
   const analysisPointCount = 1;
-  const analysisPoints = ti.Vector.field(2,ti.f32, [analysisPointCount]) as ti.Field;
+  const analysisPoints = ti.Vector.field(2, ti.f32, [
+    analysisPointCount,
+  ]) as ti.Field;
 
   for (let i of range(analysisPointCount)) {
-    const x = n/2;
-    const y = n*2;
-    analysisPoints.set([i], [x,y]);
+    const x = n / 2;
+    const y = n * 2;
+    analysisPoints.set([i], [x, y]);
   }
 
-  ti.addToKernelScope({ points, pixels, n, rectangles, rectangleCount, analysisPoints, analysisPointCount});
+  ti.addToKernelScope({
+    points,
+    pixels,
+    n,
+    rectangles,
+    rectangleCount,
+    analysisPoints,
+    analysisPointCount,
+  });
 
   const kernel = ti.kernel((time: number) => {
-    
-    const goesThroughWindow = (v: ti.Vector) => {
-        
-        
-        let bool = false;
-        for (let k of ti.range(rectangleCount)) {
-
+    const goesThroughWindow = (position: ti.Vector) => {
+      let bool = false;
+      const pos = position.xy as ti.Vector;
+      for (let k of ti.range(analysisPointCount)) {
+        const analysisPoint = analysisPoints[k] as ti.Vector;
+        for (let i of ti.range(rectangleCount)) {
+          const rectangle = rectangles[i];
+          const dir = (analysisPoint - pos) as ti.Vector;
+          const t = (rectangle.yMin - pos.y) / dir.y;
+          if (t > 0) {
+            const intersection = pos + dir * t;
+            if (
+              intersection.x > rectangle.xMin &&
+              intersection.x <= rectangle.xMax
+            ) {
+              bool = true;
+            }
+          }
           if (
-            v.x > rectangles[k].xMin &&
-            v.x <= rectangles[k].xMax &&
-            v.y > rectangles[k].yMin &&
-            v.y <= rectangles[k].yMax
+            position.x > rectangle.xMin &&
+            position.x <= rectangle.xMax &&
+            position.y > rectangle.yMin &&
+            position.y <= rectangle.yMax
           ) {
             bool = true;
           }
         }
-        return bool;
-      };
+      }
+      return bool;
+    };
 
     const isInside = (v: ti.Vector) => {
       let bool = false;
@@ -71,7 +98,7 @@ let main = async () => {
       return bool;
     };
     for (let I of ti.ndrange(n, n)) {
-      const bool = isInside(points[I]);
+      const bool = goesThroughWindow(points[I]);
       pixels[I][0] = bool;
       pixels[I][1] = bool;
       pixels[I][2] = bool;
