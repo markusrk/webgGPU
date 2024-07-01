@@ -31,10 +31,10 @@ let main = async () => {
   for (let i of range(analysisPointCount)) {
     const x = n/2;
     const y = n*2;
-    analysisPoints.set([i, 0], [x,y]);
+    analysisPoints.set([i], [x,y]);
   }
 
-  ti.addToKernelScope({ points, pixels, n, rectangles, rectangleCount });
+  ti.addToKernelScope({ points, pixels, n, rectangles, rectangleCount, analysisPoints, analysisPointCount});
 
   const kernel = ti.kernel((time: number) => {
     
