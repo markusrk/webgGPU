@@ -4,14 +4,19 @@ import { range } from "taichi.js/dist/taichi";
 let main = async () => {
   await ti.init();
 
-  const n = 100;
+  console.log("initialising grid")
+  const n = 2000;
   const points = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
   const pixels = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
 
-  for (let i of ti.ndrange(n, n)) {
-    points.set(i, [...i, 0]);
-  }
 
+  const arr = new Array(n).fill(0).map((_, i) => 
+    new Array(n).fill(0).map((_, j) => [i, j, 0])
+  );
+  points.fromArray(arr);
+
+  console.log("initialising rectangles")
+  
   const Rectangle = ti.types.struct({
     xMin: ti.f32,
     xMax: ti.f32,
@@ -30,6 +35,8 @@ let main = async () => {
     rectangles.set([i], struct);
   }
 
+  console.log("initialising analysis points")
+  
   const analysisPointCount = 1;
   const analysisPoints = ti.Vector.field(2, ti.f32, [
     analysisPointCount,
@@ -40,6 +47,8 @@ let main = async () => {
     const y = n * 2;
     analysisPoints.set([i], [x, y]);
   }
+console.log("adding to kernel scope")
+
 
   ti.addToKernelScope({
     points,
@@ -50,6 +59,9 @@ let main = async () => {
     analysisPoints,
     analysisPointCount,
   });
+
+console.log("creating kernel")
+
 
   const kernel = ti.kernel((time: number) => {
     const goesThroughWindow = (position: ti.Vector) => {
@@ -70,33 +82,11 @@ let main = async () => {
               bool = true;
             }
           }
-          if (
-            position.x > rectangle.xMin &&
-            position.x <= rectangle.xMax &&
-            position.y > rectangle.yMin &&
-            position.y <= rectangle.yMax
-          ) {
-            bool = true;
-          }
         }
       }
       return bool;
     };
 
-    const isInside = (v: ti.Vector) => {
-      let bool = false;
-      for (let k of ti.range(rectangleCount)) {
-        if (
-          v.x > rectangles[k].xMin &&
-          v.x <= rectangles[k].xMax &&
-          v.y > rectangles[k].yMin &&
-          v.y <= rectangles[k].yMax
-        ) {
-          bool = true;
-        }
-      }
-      return bool;
-    };
     for (let I of ti.ndrange(n, n)) {
       const bool = goesThroughWindow(points[I]);
       pixels[I][0] = bool;
