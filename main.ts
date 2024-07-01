@@ -12,54 +12,58 @@ let main = async () => {
     points.set(i,[...i,0.] );
   }
 
+  const Rectangle = ti.types.struct({xMin: ti.f32, xMax: ti.f32, yMin: ti.f32, yMax: ti.f32})
   const rectangleCount = 100;
-  const rectangles = ti.Vector.field(4,ti.i32, [rectangleCount]);
+  const rectangles = ti.field(Rectangle, [rectangleCount]);
 
   for (let i of range(rectangleCount)) {
     const xMin = Math.max(0, Math.random() * n - 5);
     const xMax = xMin + 5;
     const yMin = Math.max(0, Math.random() * n - 5);
     const yMax = yMin + 5;
-    const vector = [xMin, xMax, yMin, yMax];
-    rectangles.set([i], vector);
+    const struct = {xMin, xMax, yMin, yMax};
+    rectangles.set([i], struct);
   }
 
   const analysisPointCount = 1;
-  const analysisPoints = ti.field(ti.f32, [analysisPointCount,2]) as ti.Field;
+  const analysisPoints = ti.Vector.field(2,ti.f32, [analysisPointCount]) as ti.Field;
 
   for (let i of range(analysisPointCount)) {
     const x = n/2;
     const y = n*2;
-    analysisPoints.set([i, 0], x);
-    analysisPoints.set([i, 1], y);
+    analysisPoints.set([i, 0], [x,y]);
   }
 
   ti.addToKernelScope({ points, pixels, n, rectangles, rectangleCount });
 
   const kernel = ti.kernel((time: number) => {
-    // const goesThroughWindow = (i: number, j: number) => {
-    //     let bool = false;
-    //     for (let k of ti.range(rectangleCount)) {
-    //         if (
-    //         i > rectangles[(k, 0)] &&
-    //         i <= rectangles[(k, 1)] &&
-    //         j > rectangles[(k, 2)] &&
-    //         j <= rectangles[(k, 3)]
-    //         ) {
-    //         bool = true;
-    //         }
-    //     }
-    //     return bool;
-    // }
+    
+    const goesThroughWindow = (v: ti.Vector) => {
+        
+        
+        let bool = false;
+        for (let k of ti.range(rectangleCount)) {
+
+          if (
+            v.x > rectangles[k].xMin &&
+            v.x <= rectangles[k].xMax &&
+            v.y > rectangles[k].yMin &&
+            v.y <= rectangles[k].yMax
+          ) {
+            bool = true;
+          }
+        }
+        return bool;
+      };
 
     const isInside = (v: ti.Vector) => {
       let bool = false;
       for (let k of ti.range(rectangleCount)) {
         if (
-          v.x > rectangles[k][0] &&
-          v.x <= rectangles[k][1] &&
-          v.y > rectangles[k][2] &&
-          v.y <= rectangles[k][3]
+          v.x > rectangles[k].xMin &&
+          v.x <= rectangles[k].xMax &&
+          v.y > rectangles[k].yMin &&
+          v.y <= rectangles[k].yMax
         ) {
           bool = true;
         }
