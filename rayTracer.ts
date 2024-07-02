@@ -32,18 +32,22 @@ export const rayTrace = async (
 
   const windowsInJS = generateWindowsAlongWall(polygonInJS, windowOptions);
   const rectangleCount = windowsInJS.length;
-  const windows = ti.field(Rectangle, rectangleCount);
+  const windows = ti.Vector.field(3, ti.f32, [rectangleCount, 2]);
 
   for (let i of range(rectangleCount)) {
     const x0 = windowsInJS[i][0][0];
     const x1 = windowsInJS[i][1][0];
     const y0 = windowsInJS[i][0][1];
     const y1 = windowsInJS[i][1][1];
-    const struct = { x0, x1, y0, y1 };
-    windows.set([i], struct);
+    const z0 = windowsInJS[i][0][2];
+    const z1 = windowsInJS[i][1][2];
+    const vec1 = [x0, y0, z0];
+    const vec2 = [x1, y1, z1];
+    windows.set([i, 0], vec1);
+    windows.set([i, 1], vec2);
   }
 
-  const analysisPoints = ti.Vector.field(2, ti.f32, [
+  const analysisPoints = ti.Vector.field(3, ti.f32, [
     analysisPointResolutionInDegrees,
   ]) as ti.Field;
 
@@ -81,7 +85,7 @@ export const rayTrace = async (
 
   const initilizeAnalysisPoints = ti.kernel(() => {
     for (let i of ti.range(analysisPointResolutionInDegrees)) {
-      analysisPoints[i] = [n * 2 * ti.sin(i / 50), n * 2 * ti.cos(i / 50)];
+      analysisPoints[i] = [n * 2 * ti.sin(i / 50), n * 2 * ti.cos(i / 50),0];
     }
   });
 
@@ -90,6 +94,7 @@ export const rayTrace = async (
       analysisPoints[i] = [
         n * 2000 * ti.sin(t / 50 + i * 1),
         n * 2000 * ti.cos(t / 50 + i * 1),
+        0,
       ];
     }
   });
@@ -110,13 +115,18 @@ export const rayTrace = async (
   const rayTrace = ti.kernel((time: number) => {
     const goesThroughRectangleCount = (position: ti.Vector) => {
       let count = 0;
-      const pos = position.xy as ti.Vector;
       for (let k of ti.range(analysisPointResolutionInDegrees)) {
         const analysisPoint = analysisPoints[k] as ti.Vector;
-        const rayDir = (analysisPoint - pos) as ti.Vector;
+        const rayDir = (analysisPoint - position) as ti.Vector;
         for (let i of ti.range(rectangleCount)) {
-          const rectangle = windows[i];
-          const isInside = rayIntersectsRectangle(pos, rayDir, rectangle);
+          const recStart = windows[(i, 0)];
+          const recEnd = windows[(i, 1)];
+          const isInside = rayIntersectsRectangle(
+            position,
+            rayDir,
+            recStart,
+            recEnd
+          );
           if (isInside) {
             count = count + 1;
           }
