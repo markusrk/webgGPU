@@ -105,7 +105,10 @@ let main = async () => {
   let i = 0;
   async function frame() {
     i = i + 1;
-    analysisPoints.set([0],[n*2*Math.sin(i/50),n*2*Math.cos(i/50)] );
+    analysisPoints.set(
+      [0],
+      [n * 2 * Math.sin(i / 50), n * 2 * Math.cos(i / 50)]
+    );
     kernel(i);
     canvas.setImage(pixels);
     requestAnimationFrame(frame);
