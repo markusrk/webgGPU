@@ -12,12 +12,21 @@ export const isPointWithinRectangle = (
   );
 };
 
+const DEFAULT_OPTIONS = {
+  windowSize: 50,
+  windowSpacing: 200,
+  windowHeight: 5,
+};
+
 export const generateWindowsAlongWall = (
   polygon: ti.Vector[],
-  options: { windowSize: number; windowSpacing: number }
+  options: { windowSize: number; windowSpacing: number; windowHeight: number }
 ): ti.Field => {
-  const { windowSize, windowSpacing } = options;
-  const windows = [] as [[number, number], [number, number]][];
+  const { windowSize, windowSpacing, windowHeight } = {
+    ...DEFAULT_OPTIONS,
+    ...options,
+  };
+  const windows = [] as [[number, number, number], [number, number, number]][];
   for (let i = 0; i < polygon.length - 1; i++) {
     const startPosition = polygon[i];
     const endPosition = polygon[i + 1];
@@ -39,7 +48,7 @@ export const generateWindowsAlongWall = (
         number,
         number
       ];
-      windows.push([windowStartPosition, windowEndPosition]);
+      windows.push([[...windowStartPosition,0], [...windowEndPosition, windowHeight]]);
       t += windowSpacing;
     }
   }
