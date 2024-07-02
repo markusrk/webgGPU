@@ -4,11 +4,12 @@ import {
   generateWindowsAlongWall,
   isPointWithinRectangle,
 } from "./geometryTools";
+import { initializeScoresMaskJS } from "./pointInPolygon";
 
 let main = async () => {
   await ti.init();
 
-  const n = 1000;
+  const n = 100;
   const analysisPointResolutionInDegrees = 1000;
 
   console.log("initialising grid");
@@ -166,6 +167,7 @@ let main = async () => {
   initilizeGrid();
   initilizeAnalysisPoints();
   initializeScoresMask();
+  initializeScoresMaskJS(scoresMask, polygon);
 
   let i = 0;
   async function frame() {
