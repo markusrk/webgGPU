@@ -58,6 +58,11 @@ let main = async () => {
 
   console.log("creating kernel");
 
+  const initilizeGrid = ti.kernel(()=>{
+    for (let I of ti.ndrange(n, n)) {
+        points[I] = [I[0],I[1],0]
+    }
+  })
 
   const kernel = ti.kernel((time: number) => {
     const goesThroughWindow = (position: ti.Vector) => {
@@ -95,6 +100,7 @@ let main = async () => {
   htmlCanvas.width = n;
   htmlCanvas.height = n;
   let canvas = new ti.Canvas(htmlCanvas);
+  initilizeGrid()
 
   let i = 0;
   async function frame() {
