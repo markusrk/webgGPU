@@ -1,12 +1,14 @@
 import * as ti from "taichi.js";
 import { Vector, range } from "taichi.js/dist/taichi";
-import { isPointWithinRectangle } from "./geometryTools";
+import {
+  generateWindowsAlongWall,
+  isPointWithinRectangle,
+} from "./geometryTools";
 
 let main = async () => {
   await ti.init();
 
   const n = 1000;
-  const rectangleCount = 10;
   const analysisPointResolutionInDegrees = 1000;
 
   console.log("initialising grid");
@@ -31,13 +33,15 @@ let main = async () => {
     [n * 0.9, n * 0.1],
     [n * 0.1, n * 0.1],
   ] as [number, number][];
-  const windows = ti.field(Rectangle, [rectangleCount]);
+  const windowsInJS = generateWindowsAlongWall(polygon, 5, 400);
+  const rectangleCount = windowsInJS.length;
+  const windows = ti.field(Rectangle, rectangleCount);
 
   for (let i of range(rectangleCount)) {
-    const x0 = Math.max(0, Math.random() * n - 5);
-    const x1 = x0 + 5;
-    const y0 = Math.max(0, Math.random() * n - 5);
-    const y1 = y0 + 5;
+    const x0 = windowsInJS[i][0][0];
+    const x1 = windowsInJS[i][1][0];
+    const y0 = windowsInJS[i][0][1];
+    const y1 = windowsInJS[i][1][1];
     const struct = { x0, x1, y0, y1 };
     windows.set([i], struct);
   }
@@ -169,28 +173,28 @@ let main = async () => {
     let startTime = performance.now();
     updateAnalysisPoint(i);
     const updateAnalysisPointTime = performance.now() - startTime;
-    i <= 200 &&
+    i <= 0 &&
       console.log(`updateAnalysisPoint time: ${updateAnalysisPointTime} ms`);
 
     startTime = performance.now();
     kernel(i);
     const kernelTime = performance.now() - startTime;
-    i <= 200 && console.log(`kernel time: ${kernelTime} ms`);
+    i <= 0 && console.log(`kernel time: ${kernelTime} ms`);
 
     startTime = performance.now();
     updateTexture();
     const updateTextureTime = performance.now() - startTime;
-    i <= 200 && console.log(`updateTexture time: ${updateTextureTime} ms`);
+    i <= 0 && console.log(`updateTexture time: ${updateTextureTime} ms`);
 
     startTime = performance.now();
     canvas.setImage(pixels);
     const setImageTime = performance.now() - startTime;
-    i <= 200 && console.log(`setImage time: ${setImageTime} ms`);
+    i <= 0 && console.log(`setImage time: ${setImageTime} ms`);
 
     startTime = performance.now();
     requestAnimationFrame(frame);
     const requestAnimationFrameTime = performance.now() - startTime;
-    i <= 200 &&
+    i <= 0 &&
       console.log(
         `requestAnimationFrame time: ${requestAnimationFrameTime} ms`
       );
