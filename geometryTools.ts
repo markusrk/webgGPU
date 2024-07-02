@@ -14,11 +14,11 @@ export const isPointWithinRectangle = (
 
 export const generateWindowsAlongWall = (
   polygon: ti.Vector[],
-  windowSize: number,
-  windowSpacing: number
+  options: { windowSize: number; windowSpacing: number }
 ): ti.Field => {
-  const windows = [] as [[number, number],[number, number]][];
-  for (let i = 0; i < polygon.length-1; i++) {
+  const { windowSize, windowSpacing } = options;
+  const windows = [] as [[number, number], [number, number]][];
+  for (let i = 0; i < polygon.length - 1; i++) {
     const startPosition = polygon[i];
     const endPosition = polygon[i + 1];
     const relDir = minus(endPosition, startPosition);
@@ -31,8 +31,14 @@ export const generateWindowsAlongWall = (
     while (t + windowSize < wallLength) {
       let t0 = t;
       t += windowSize;
-      const windowStartPosition = add(startPosition ,scalarMul(dir,t0)) as [number, number];
-      const windowEndPosition = add(startPosition ,scalarMul(dir,t)) as [number, number];
+      const windowStartPosition = add(startPosition, scalarMul(dir, t0)) as [
+        number,
+        number
+      ];
+      const windowEndPosition = add(startPosition, scalarMul(dir, t)) as [
+        number,
+        number
+      ];
       windows.push([windowStartPosition, windowEndPosition]);
       t += windowSpacing;
     }
@@ -42,21 +48,21 @@ export const generateWindowsAlongWall = (
 
 const minus = (a: number[], b: number[]): number[] => {
   return a.map((_, i) => a[i] - b[i]);
-}
+};
 
 const norm = (a: number[]): number[] => {
   const mag = Math.sqrt(a.reduce((acc, cur) => acc + cur * cur, 0));
   return a.map((x) => x / mag);
-}
+};
 
 const add = (a: number[], b: number[]): number[] => {
-    return a.map((_, i) => a[i] + b[i]);
-    }
+  return a.map((_, i) => a[i] + b[i]);
+};
 
 const mul = (a: number[], b: number[]): number[] => {
-    return a.map((_, i) => a[i] * b[i]);
-    }
+  return a.map((_, i) => a[i] * b[i]);
+};
 
 const scalarMul = (a: number[], b: number): number[] => {
-    return a.map((x) => x * b);
-    }
+  return a.map((x) => x * b);
+};

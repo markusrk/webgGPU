@@ -1,11 +1,14 @@
 import * as ti from "taichi.js";
 import { range } from "taichi.js/dist/taichi";
-import {
-  generateWindowsAlongWall
-} from "./geometryTools";
+import { generateWindowsAlongWall } from "./geometryTools";
 import { isPointInsidePolygon } from "./pointInPolygon";
 
-let main = async (n: number, polygonInJs: [number, number][]) => {
+let main = async (
+  n: number,
+  polygonInJs: [number, number][],
+  windowOptions: { windowSize: number; windowSpacing: number },
+  htmlCanvas: HTMLCanvasElement
+) => {
   await ti.init();
 
   const analysisPointResolutionInDegrees = 1000;
@@ -28,7 +31,9 @@ let main = async (n: number, polygonInJs: [number, number][]) => {
   const polygonLength = polygonInJS.length;
   const polygon = ti.Vector.field(2, ti.f32, [polygonLength]) as ti.Field;
   polygon.fromArray(polygonInJS);
-  const windowsInJS = generateWindowsAlongWall(polygonInJS, 50, 200);
+
+  
+  const windowsInJS = generateWindowsAlongWall(polygonInJS, windowOptions);
   const rectangleCount = windowsInJS.length;
   const windows = ti.field(Rectangle, rectangleCount);
 
@@ -68,7 +73,11 @@ let main = async (n: number, polygonInJs: [number, number][]) => {
 
   const initializeScoresMask = ti.kernel(() => {
     for (let I of ti.ndrange(n, n)) {
-      scoresMask[I] = isPointInsidePolygon(points[I].xy, polygon, polygonLength);
+      scoresMask[I] = isPointInsidePolygon(
+        points[I].xy,
+        polygon,
+        polygonLength
+      );
     }
   });
 
@@ -155,14 +164,10 @@ let main = async (n: number, polygonInJs: [number, number][]) => {
     }
   });
 
-  const htmlCanvas = document.getElementById("result_canvas")! as ti.Canvas;
-  htmlCanvas.width = n;
-  htmlCanvas.height = n;
   let canvas = new ti.Canvas(htmlCanvas);
   initilizeGrid();
   initilizeAnalysisPoints();
   initializeScoresMask();
-
 
   let i = 0;
   async function frame() {
@@ -199,12 +204,19 @@ let main = async (n: number, polygonInJs: [number, number][]) => {
   requestAnimationFrame(frame);
 };
 const resolution = 1000;
-const polygonInJS = [
-    [resolution * 0.1, resolution * 0.1],
-    [resolution * 0.1, resolution * 0.4],
-    [resolution * 0.9, resolution * 0.9],
-    [resolution * 0.9, resolution * 0.1],
-    [resolution * 0.1, resolution * 0.1],
-  ] as [number, number][];
 
-main(resolution, polygonInJS);
+const polygonInJS = [
+  [resolution * 0.1, resolution * 0.1],
+  [resolution * 0.1, resolution * 0.4],
+  [resolution * 0.9, resolution * 0.9],
+  [resolution * 0.9, resolution * 0.1],
+  [resolution * 0.1, resolution * 0.1],
+] as [number, number][];
+
+const htmlCanvas = document.getElementById("result_canvas")! as ti.Canvas;
+htmlCanvas.width = resolution;
+htmlCanvas.height = resolution;
+
+const windowOptions = { windowSize: 50, windowSpacing: 200 };
+
+main(resolution, polygonInJS, windowOptions, htmlCanvas);
