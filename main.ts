@@ -1,21 +1,16 @@
 import * as ti from "taichi.js";
-import { range } from "taichi.js/dist/taichi";
+import { Vector, range } from "taichi.js/dist/taichi";
 
 let main = async () => {
   await ti.init();
 
-  console.log("initialising grid")
+  console.log("initialising grid");
   const n = 2000;
   const points = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
   const pixels = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
 
 
-  const arr = new Array(n).fill(0).map((_, i) => 
-    new Array(n).fill(0).map((_, j) => [i, j, 0])
-  );
-  points.fromArray(arr);
-
-  console.log("initialising rectangles")
+  console.log("initialising rectangles");
   
   const Rectangle = ti.types.struct({
     xMin: ti.f32,
@@ -35,7 +30,9 @@ let main = async () => {
     rectangles.set([i], struct);
   }
 
-  console.log("initialising analysis points")
+  type Window = { x0; number; x1: number; y0: number; y1: number };
+
+  console.log("initialising analysis points");
   
   const analysisPointCount = 1;
   const analysisPoints = ti.Vector.field(2, ti.f32, [
@@ -47,8 +44,7 @@ let main = async () => {
     const y = n * 2;
     analysisPoints.set([i], [x, y]);
   }
-console.log("adding to kernel scope")
-
+  console.log("adding to kernel scope");
 
   ti.addToKernelScope({
     points,
@@ -60,7 +56,7 @@ console.log("adding to kernel scope")
     analysisPointCount,
   });
 
-console.log("creating kernel")
+  console.log("creating kernel");
 
 
   const kernel = ti.kernel((time: number) => {
