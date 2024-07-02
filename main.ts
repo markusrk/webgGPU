@@ -33,7 +33,7 @@ let main = async () => {
 
   console.log("initialising analysis points");
   
-  const analysisPointCount = 1;
+  const analysisPointCount = 10;
   const analysisPoints = ti.Vector.field(2, ti.f32, [
     analysisPointCount,
   ]) as ti.Field;
@@ -75,6 +75,7 @@ let main = async () => {
   });
 
   const kernel = ti.kernel((time: number) => {
+    const adjustmentFactor = 10/analysisPointCount/ti.sqrt(rectangleCount)
     const goesThroughWindowsCount = (position: ti.Vector) => {
       let count = 0;
       const pos = position.xy as ti.Vector;
@@ -100,9 +101,8 @@ let main = async () => {
 
     for (let I of ti.ndrange(n, n)) {
       const count = goesThroughWindowsCount(points[I]);
-      pixels[I][0] += 10/analysisPointCount/rectangleCount * count;
-      pixels[I][2] += 10/analysisPointCount/rectangleCount * count
-      pixels[I][1] += 10/analysisPointCount/rectangleCount * count
+      const score = pixels[I][0] + adjustmentFactor * count;
+      pixels[I] = [score,score,score];
     }
   });
 
