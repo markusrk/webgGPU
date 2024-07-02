@@ -57,6 +57,11 @@ let main = async () => {
       points[I] = [I[0], I[1], 0];
     }
   });
+  const resetPixels = ti.kernel(() => {
+    for (let I of ti.ndrange(n, n)) {
+      pixels[I] = [0,0, 0];
+    }
+  });
   const initilizeAnalysisPoints = ti.kernel(() => {
     for (let i of ti.range(analysisPointCount)) {
       analysisPoints[i] = [n * 2 * Math.sin(i / 50), n * 2 * Math.cos(i / 50)];
@@ -70,8 +75,8 @@ let main = async () => {
   });
 
   const kernel = ti.kernel((time: number) => {
-    const goesThroughWindow = (position: ti.Vector) => {
-      let bool = false;
+    const goesThroughWindowsCount = (position: ti.Vector) => {
+      let count = 0;
       const pos = position.xy as ti.Vector;
       for (let k of ti.range(analysisPointCount)) {
         const analysisPoint = analysisPoints[k] as ti.Vector;
@@ -85,19 +90,19 @@ let main = async () => {
               intersection.x > rectangle.xMin &&
               intersection.x <= rectangle.xMax
             ) {
-              bool = true;
+                count += 1;
             }
           }
         }
       }
-      return bool;
+      return count;
     };
 
     for (let I of ti.ndrange(n, n)) {
-      const bool = goesThroughWindow(points[I]);
-      pixels[I][0] = bool;
-      pixels[I][1] = bool;
-      pixels[I][2] = bool;
+      const count = goesThroughWindowsCount(points[I]);
+      pixels[I][0] += 10/analysisPointCount/rectangleCount * count;
+      pixels[I][2] += 10/analysisPointCount/rectangleCount * count
+      pixels[I][1] += 10/analysisPointCount/rectangleCount * count
     }
   });
 
@@ -116,6 +121,7 @@ let main = async () => {
       [n * 2 * Math.sin(i / 50), n * 2 * Math.cos(i / 50)]
     );
     updateAnalysisPoint(i)
+    resetPixels()
     kernel(i);
     canvas.setImage(pixels);
     requestAnimationFrame(frame);
