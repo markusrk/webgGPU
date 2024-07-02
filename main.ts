@@ -84,23 +84,33 @@ let main = async () => {
   });
 
   const kernel = ti.kernel((time: number) => {
-    const goesThroughWindowsCount = (position: ti.Vector) => {
+    const goesThroughRectangleCount = (position: ti.Vector) => {
       let count = 0;
       const pos = position.xy as ti.Vector;
       for (let k of ti.range(analysisPointCount)) {
         const analysisPoint = analysisPoints[k] as ti.Vector;
         for (let i of ti.range(rectangleCount)) {
           const rectangle = rectangles[i];
-          const dir = (analysisPoint - pos) as ti.Vector;
-          const t = (rectangle.y0 - pos.y) / dir.y;
-          if (t > 0) {
-            const intersection = pos + dir * t;
-            if (
-              intersection.x > rectangle.x0 &&
-              intersection.x <= rectangle.x1
-            ) {
+          const startRec = [rectangle.x0, rectangle.y0] as ti.Vector;
+          const endRec = [rectangle.x1, rectangle.y1] as ti.Vector;
+          const planeTangentVec = (endRec - startRec) as ti.Vector;
+          const rayDir = (analysisPoint - pos) as ti.Vector;
+          const dot = ti.dot(planeTangentVec, rayDir);
+          if (dot <= 0.00001) {
+            continue;
+          }
+          const planeNormVec = [
+            planeTangentVec.y,
+            -planeTangentVec.x,
+          ] as ti.Vector;
+          const t2 =
+            ti.dot(startRec - pos, planeNormVec) / ti.dot(rayDir, planeNormVec);
+          const pointInPlane = pos + rayDir * t2;
+          const isInside =
+            ti.dot(startRec - pointInPlane, endRec - pointInPlane) <= 0;
+
+          if (isInside && t2 > 0) {
               count += 1;
-            }
           }
         }
       }
@@ -109,7 +119,7 @@ let main = async () => {
 
     for (let I of ti.ndrange(n, n)) {
       for (let i of ti.range(1)) {
-        scores[I] = goesThroughWindowsCount(points[I]);
+        scores[I] = goesThroughRectangleCount(points[I]);
       }
     }
   });
