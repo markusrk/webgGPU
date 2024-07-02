@@ -3,9 +3,12 @@ import { Vector, range } from "taichi.js/dist/taichi";
 
 let main = async () => {
   await ti.init();
+  
+  const n = 2000;
+  const rectangleCount = 100;
+  const analysisPointCount = 10;
 
   console.log("initialising grid");
-  const n = 2000;
   const points = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
   const scores = ti.field(ti.f32, [n, n]) as ti.Field;
   const pixels = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
@@ -18,7 +21,6 @@ let main = async () => {
     y0: ti.f32,
     y1: ti.f32,
   });
-  const rectangleCount = 100;
   const rectangles = ti.field(Rectangle, [rectangleCount]);
 
   for (let i of range(rectangleCount)) {
@@ -30,11 +32,8 @@ let main = async () => {
     rectangles.set([i], struct);
   }
 
-  type Window = { x0; number; x1: number; y0: number; y1: number };
-
   console.log("initialising analysis points");
 
-  const analysisPointCount = 10;
   const analysisPoints = ti.Vector.field(2, ti.f32, [
     analysisPointCount,
   ]) as ti.Field;
@@ -110,7 +109,7 @@ let main = async () => {
             ti.dot(startRec - pointInPlane, endRec - pointInPlane) <= 0;
 
           if (isInside && t2 > 0) {
-              count += 1;
+            count = count + 1;
           }
         }
       }
