@@ -7,6 +7,7 @@ let main = async () => {
   console.log("initialising grid");
   const n = 2000;
   const points = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
+  const scores = ti.field(ti.f32, [n, n]) as ti.Field;
   const pixels = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
 
   console.log("initialising rectangles");
@@ -48,6 +49,7 @@ let main = async () => {
     rectangleCount,
     analysisPoints,
     analysisPointCount,
+    scores,
   });
 
   console.log("creating kernel");
@@ -57,11 +59,7 @@ let main = async () => {
       points[I] = [I[0], I[1], 0];
     }
   });
-  const resetPixels = ti.kernel(() => {
-    for (let I of ti.ndrange(n, n)) {
-      pixels[I] = [0,0, 0];
-    }
-  });
+
   const initilizeAnalysisPoints = ti.kernel(() => {
     for (let i of ti.range(analysisPointCount)) {
       analysisPoints[i] = [n * 2 * Math.sin(i / 50), n * 2 * Math.cos(i / 50)];
@@ -70,12 +68,22 @@ let main = async () => {
 
   const updateAnalysisPoint = ti.kernel((t: number) => {
     for (let i of ti.range(analysisPointCount)) {
-      analysisPoints[i] = [n * 2 * Math.sin(t / 50+i*1), n * 2 * Math.cos(t / 50+i*1)];
+      analysisPoints[i] = [
+        n * 2 * Math.sin(t / 50 + i * 1),
+        n * 2 * Math.cos(t / 50 + i * 1),
+      ];
+    }
+  });
+
+  const updateTexture = ti.kernel(() => {
+    const adjustmentFactor = 10 / analysisPointCount / ti.sqrt(rectangleCount);
+    for (let I of ti.ndrange(n, n)) {
+      const color = adjustmentFactor * scores[I];
+      pixels[I] = [color, color, color];
     }
   });
 
   const kernel = ti.kernel((time: number) => {
-    const adjustmentFactor = 10/analysisPointCount/ti.sqrt(rectangleCount)
     const goesThroughWindowsCount = (position: ti.Vector) => {
       let count = 0;
       const pos = position.xy as ti.Vector;
@@ -100,9 +108,7 @@ let main = async () => {
     };
 
     for (let I of ti.ndrange(n, n)) {
-      const count = goesThroughWindowsCount(points[I]);
-      const score = pixels[I][0] + adjustmentFactor * count;
-      pixels[I] = [score,score,score];
+      scores[I] = goesThroughWindowsCount(points[I]);
     }
   });
 
@@ -116,9 +122,9 @@ let main = async () => {
   let i = 0;
   async function frame() {
     i = i + 1;
-    updateAnalysisPoint(i)
-    resetPixels()
+    updateAnalysisPoint(i);
     kernel(i);
+    updateTexture()
     canvas.setImage(pixels);
     requestAnimationFrame(frame);
   }
