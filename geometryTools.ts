@@ -20,7 +20,7 @@ const DEFAULT_OPTIONS = {
 
 export const generateWindowsAlongWall = (
   polygon: ti.Vector[],
-  options: { windowSize: number; windowSpacing: number; windowHeight: number }
+  options: { windowSize?: number; windowSpacing?: number; windowHeight?: number }
 ): ti.Field => {
   const { windowSize, windowSpacing, windowHeight } = {
     ...DEFAULT_OPTIONS,

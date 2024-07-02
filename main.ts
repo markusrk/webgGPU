@@ -1,4 +1,5 @@
 import { rayTrace } from "./rayTracer";
+import * as ti from "taichi.js";
 
 const resolution = 1000;
 
