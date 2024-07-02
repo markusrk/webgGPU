@@ -62,15 +62,15 @@ let main = async () => {
 
   const initilizeAnalysisPoints = ti.kernel(() => {
     for (let i of ti.range(analysisPointCount)) {
-      analysisPoints[i] = [n * 2 * Math.sin(i / 50), n * 2 * Math.cos(i / 50)];
+      analysisPoints[i] = [n * 2 * ti.sin(i / 50), n * 2 * ti.cos(i / 50)];
     }
   });
 
   const updateAnalysisPoint = ti.kernel((t: number) => {
     for (let i of ti.range(analysisPointCount)) {
       analysisPoints[i] = [
-        n * 2 * Math.sin(t / 50 + i * 1),
-        n * 2 * Math.cos(t / 50 + i * 1),
+        n * 2 * ti.sin(t / 50 + i * 1),
+        n * 2 * ti.cos(t / 50 + i * 1),
       ];
     }
   });
