@@ -9,7 +9,6 @@ let main = async () => {
   const points = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
   const pixels = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
 
-
   console.log("initialising rectangles");
   
   const Rectangle = ti.types.struct({
@@ -39,11 +38,6 @@ let main = async () => {
     analysisPointCount,
   ]) as ti.Field;
 
-  for (let i of range(analysisPointCount)) {
-    const x = n / 2;
-    const y = n * 2;
-    analysisPoints.set([i], [x, y]);
-  }
   console.log("adding to kernel scope");
 
   ti.addToKernelScope({
@@ -58,11 +52,22 @@ let main = async () => {
 
   console.log("creating kernel");
 
-  const initilizeGrid = ti.kernel(()=>{
+  const initilizeGrid = ti.kernel(() => {
     for (let I of ti.ndrange(n, n)) {
-        points[I] = [I[0],I[1],0]
+      points[I] = [I[0], I[1], 0];
     }
-  })
+  });
+  const initilizeAnalysisPoints = ti.kernel(() => {
+    for (let i of ti.range(analysisPointCount)) {
+      analysisPoints[i] = [n * 2 * Math.sin(i / 50), n * 2 * Math.cos(i / 50)];
+    }
+  });
+
+  const updateAnalysisPoint = ti.kernel((t: number) => {
+    for (let i of ti.range(analysisPointCount)) {
+      analysisPoints[i] = [n * 2 * Math.sin(t / 50+i*1), n * 2 * Math.cos(t / 50+i*1)];
+    }
+  });
 
   const kernel = ti.kernel((time: number) => {
     const goesThroughWindow = (position: ti.Vector) => {
@@ -100,7 +105,8 @@ let main = async () => {
   htmlCanvas.width = n;
   htmlCanvas.height = n;
   let canvas = new ti.Canvas(htmlCanvas);
-  initilizeGrid()
+  initilizeGrid();
+  initilizeAnalysisPoints();
 
   let i = 0;
   async function frame() {
@@ -109,6 +115,7 @@ let main = async () => {
       [0],
       [n * 2 * Math.sin(i / 50), n * 2 * Math.cos(i / 50)]
     );
+    updateAnalysisPoint(i)
     kernel(i);
     canvas.setImage(pixels);
     requestAnimationFrame(frame);
