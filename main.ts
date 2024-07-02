@@ -93,15 +93,15 @@ let main = async () => {
           const startRec = [rectangle.x0, rectangle.y0] as ti.Vector;
           const endRec = [rectangle.x1, rectangle.y1] as ti.Vector;
           const planeTangentVec = (endRec - startRec) as ti.Vector;
-          const rayDir = (analysisPoint - pos) as ti.Vector;
-          const dot = ti.dot(planeTangentVec, rayDir);
-          if (dot <= 0.00001) {
-            continue;
-          }
           const planeNormVec = [
             planeTangentVec.y,
             -planeTangentVec.x,
           ] as ti.Vector;
+          const rayDir = (analysisPoint - pos) as ti.Vector;
+          const dot = ti.dot(planeNormVec, rayDir);
+          if (dot <= 0.00001) {
+            continue;
+          }
           const t2 =
             ti.dot(startRec - pos, planeNormVec) / ti.dot(rayDir, planeNormVec);
           const pointInPlane = pos + rayDir * t2;
