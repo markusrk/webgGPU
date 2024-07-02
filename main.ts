@@ -108,7 +108,9 @@ let main = async () => {
     };
 
     for (let I of ti.ndrange(n, n)) {
+      for (let i of ti.range(1)) {
       scores[I] = goesThroughWindowsCount(points[I]);
+      }
     }
   });
 
