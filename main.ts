@@ -8,7 +8,7 @@ import { isPointInsidePolygon } from "./pointInPolygon";
 let main = async () => {
   await ti.init();
 
-  const n = 100;
+  const n = 1000;
   const analysisPointResolutionInDegrees = 1000;
 
   console.log("initialising grid");
@@ -28,7 +28,7 @@ let main = async () => {
 
   const polygonInJS = [
     [n * 0.1, n * 0.1],
-    [n * 0.1, n * 0.9],
+    [n * 0.1, n * 0.4],
     [n * 0.9, n * 0.9],
     [n * 0.9, n * 0.1],
     [n * 0.1, n * 0.1],
@@ -36,7 +36,7 @@ let main = async () => {
   const polygonLength = polygonInJS.length;
   const polygon = ti.Vector.field(2, ti.f32, [polygonLength]) as ti.Field;
   polygon.fromArray(polygonInJS);
-  const windowsInJS = generateWindowsAlongWall(polygonInJS, 5, 400);
+  const windowsInJS = generateWindowsAlongWall(polygonInJS, 50, 200);
   const rectangleCount = windowsInJS.length;
   const windows = ti.field(Rectangle, rectangleCount);
 
@@ -75,8 +75,6 @@ let main = async () => {
   console.log("creating kernels");
 
   const initializeScoresMask = ti.kernel(() => {
-
-
     for (let I of ti.ndrange(n, n)) {
       scoresMask[I] = isPointInsidePolygon(points[I].xy, polygon, polygonLength);
     }
@@ -97,8 +95,8 @@ let main = async () => {
   const updateAnalysisPoint = ti.kernel((t: number) => {
     for (let i of ti.range(analysisPointResolutionInDegrees)) {
       analysisPoints[i] = [
-        n * 2 * ti.sin(t / 50 + i * 1),
-        n * 2 * ti.cos(t / 50 + i * 1),
+        n * 2000 * ti.sin(t / 50 + i * 1),
+        n * 2000 * ti.cos(t / 50 + i * 1),
       ];
     }
   });
