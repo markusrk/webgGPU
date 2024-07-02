@@ -122,11 +122,34 @@ let main = async () => {
   let i = 0;
   async function frame() {
     i = i + 1;
+    let startTime = performance.now();
     updateAnalysisPoint(i);
+    const updateAnalysisPointTime = performance.now() - startTime;
+    i <= 200 &&
+      console.log(`updateAnalysisPoint time: ${updateAnalysisPointTime} ms`);
+
+    startTime = performance.now();
     kernel(i);
-    updateTexture()
+    const kernelTime = performance.now() - startTime;
+    i <= 200 && console.log(`kernel time: ${kernelTime} ms`);
+
+    startTime = performance.now();
+    updateTexture();
+    const updateTextureTime = performance.now() - startTime;
+    i <= 200 && console.log(`updateTexture time: ${updateTextureTime} ms`);
+
+    startTime = performance.now();
     canvas.setImage(pixels);
+    const setImageTime = performance.now() - startTime;
+    i <= 200 && console.log(`setImage time: ${setImageTime} ms`);
+
+    startTime = performance.now();
     requestAnimationFrame(frame);
+    const requestAnimationFrameTime = performance.now() - startTime;
+    i <= 200 &&
+      console.log(
+        `requestAnimationFrame time: ${requestAnimationFrameTime} ms`
+      );
   }
   requestAnimationFrame(frame);
 };
