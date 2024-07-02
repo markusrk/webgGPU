@@ -5,10 +5,9 @@ import {
 } from "./geometryTools";
 import { isPointInsidePolygon } from "./pointInPolygon";
 
-let main = async () => {
+let main = async (n: number, polygonInJs: [number, number][]) => {
   await ti.init();
 
-  const n = 1000;
   const analysisPointResolutionInDegrees = 1000;
 
   console.log("initialising grid");
@@ -26,13 +25,6 @@ let main = async () => {
     y1: ti.f32,
   });
 
-  const polygonInJS = [
-    [n * 0.1, n * 0.1],
-    [n * 0.1, n * 0.4],
-    [n * 0.9, n * 0.9],
-    [n * 0.9, n * 0.1],
-    [n * 0.1, n * 0.1],
-  ] as [number, number][];
   const polygonLength = polygonInJS.length;
   const polygon = ti.Vector.field(2, ti.f32, [polygonLength]) as ti.Field;
   polygon.fromArray(polygonInJS);
@@ -206,4 +198,13 @@ let main = async () => {
   }
   requestAnimationFrame(frame);
 };
-main();
+const resolution = 1000;
+const polygonInJS = [
+    [resolution * 0.1, resolution * 0.1],
+    [resolution * 0.1, resolution * 0.4],
+    [resolution * 0.9, resolution * 0.9],
+    [resolution * 0.9, resolution * 0.1],
+    [resolution * 0.1, resolution * 0.1],
+  ] as [number, number][];
+
+main(resolution, polygonInJS);
