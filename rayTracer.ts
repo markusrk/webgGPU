@@ -13,13 +13,10 @@ export const rayTrace = async (
 
   const analysisPointResolutionInDegrees = 1000;
 
-  console.log("initialising grid");
   const points = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
   const scoresMask = ti.field(ti.f32, [n, n]) as ti.Field;
   const scores = ti.field(ti.f32, [n, n]) as ti.Field;
   const pixels = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
-
-  console.log("initialising rectangles");
 
   const Rectangle = ti.types.struct({
     x0: ti.f32,
@@ -32,7 +29,6 @@ export const rayTrace = async (
   const polygon = ti.Vector.field(2, ti.f32, [polygonLength]) as ti.Field;
   polygon.fromArray(polygonInJS);
 
-  
   const windowsInJS = generateWindowsAlongWall(polygonInJS, windowOptions);
   const rectangleCount = windowsInJS.length;
   const windows = ti.field(Rectangle, rectangleCount);
@@ -46,13 +42,9 @@ export const rayTrace = async (
     windows.set([i], struct);
   }
 
-  console.log("initialising analysis points");
-
   const analysisPoints = ti.Vector.field(2, ti.f32, [
     analysisPointResolutionInDegrees,
   ]) as ti.Field;
-
-  console.log("adding to kernel scope");
 
   ti.addToKernelScope({
     points,
@@ -68,8 +60,6 @@ export const rayTrace = async (
     polygonLength,
     isPointInsidePolygon,
   });
-
-  console.log("creating kernels");
 
   const initializeScoresMask = ti.kernel(() => {
     for (let I of ti.ndrange(n, n)) {
@@ -115,7 +105,7 @@ export const rayTrace = async (
     }
   });
 
-  const kernel = ti.kernel((time: number) => {
+  const rayTrace = ti.kernel((time: number) => {
     const rayPassesThroughRectangle = (
       origin: ti.Vector,
       ray: ti.Vector,
@@ -172,35 +162,12 @@ export const rayTrace = async (
   let i = 0;
   async function frame() {
     i = i + 1;
-    let startTime = performance.now();
     updateAnalysisPoint(i);
-    const updateAnalysisPointTime = performance.now() - startTime;
-    i <= 0 &&
-      console.log(`updateAnalysisPoint time: ${updateAnalysisPointTime} ms`);
-
-    startTime = performance.now();
-    kernel(i);
-    const kernelTime = performance.now() - startTime;
-    i <= 0 && console.log(`kernel time: ${kernelTime} ms`);
-
-    startTime = performance.now();
+    rayTrace(i);
     updateTexture();
-    const updateTextureTime = performance.now() - startTime;
-    i <= 0 && console.log(`updateTexture time: ${updateTextureTime} ms`);
-
-    startTime = performance.now();
     canvas.setImage(pixels);
-    const setImageTime = performance.now() - startTime;
-    i <= 0 && console.log(`setImage time: ${setImageTime} ms`);
 
-    startTime = performance.now();
     requestAnimationFrame(frame);
-    const requestAnimationFrameTime = performance.now() - startTime;
-    i <= 0 &&
-      console.log(
-        `requestAnimationFrame time: ${requestAnimationFrameTime} ms`
-      );
   }
   requestAnimationFrame(frame);
 };
-
