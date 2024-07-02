@@ -11,29 +11,29 @@ let main = async () => {
   const pixels = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
 
   console.log("initialising rectangles");
-  
+
   const Rectangle = ti.types.struct({
-    xMin: ti.f32,
-    xMax: ti.f32,
-    yMin: ti.f32,
-    yMax: ti.f32,
+    x0: ti.f32,
+    x1: ti.f32,
+    y0: ti.f32,
+    y1: ti.f32,
   });
   const rectangleCount = 100;
   const rectangles = ti.field(Rectangle, [rectangleCount]);
 
   for (let i of range(rectangleCount)) {
-    const xMin = Math.max(0, Math.random() * n - 5);
-    const xMax = xMin + 5;
-    const yMin = Math.max(0, Math.random() * n - 5);
-    const yMax = yMin + 5;
-    const struct = { xMin, xMax, yMin, yMax };
+    const x0 = Math.max(0, Math.random() * n - 5);
+    const x1 = x0 + 5;
+    const y0 = Math.max(0, Math.random() * n - 5);
+    const y1 = y0 + 5;
+    const struct = { x0, x1, y0, y1 };
     rectangles.set([i], struct);
   }
 
   type Window = { x0; number; x1: number; y0: number; y1: number };
 
   console.log("initialising analysis points");
-  
+
   const analysisPointCount = 10;
   const analysisPoints = ti.Vector.field(2, ti.f32, [
     analysisPointCount,
@@ -92,14 +92,14 @@ let main = async () => {
         for (let i of ti.range(rectangleCount)) {
           const rectangle = rectangles[i];
           const dir = (analysisPoint - pos) as ti.Vector;
-          const t = (rectangle.yMin - pos.y) / dir.y;
+          const t = (rectangle.y0 - pos.y) / dir.y;
           if (t > 0) {
             const intersection = pos + dir * t;
             if (
-              intersection.x > rectangle.xMin &&
-              intersection.x <= rectangle.xMax
+              intersection.x > rectangle.x0 &&
+              intersection.x <= rectangle.x1
             ) {
-                count += 1;
+              count += 1;
             }
           }
         }
@@ -109,7 +109,7 @@ let main = async () => {
 
     for (let I of ti.ndrange(n, n)) {
       for (let i of ti.range(1)) {
-      scores[I] = goesThroughWindowsCount(points[I]);
+        scores[I] = goesThroughWindowsCount(points[I]);
       }
     }
   });
