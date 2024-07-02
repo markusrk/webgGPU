@@ -1,10 +1,9 @@
 import * as ti from "taichi.js";
-import { Vector, range } from "taichi.js/dist/taichi";
+import { range } from "taichi.js/dist/taichi";
 import {
-  generateWindowsAlongWall,
-  isPointWithinRectangle,
+  generateWindowsAlongWall
 } from "./geometryTools";
-import { initializeScoresMaskJS } from "./pointInPolygon";
+import { isPointInsidePolygon } from "./pointInPolygon";
 
 let main = async () => {
   await ti.init();
@@ -27,14 +26,17 @@ let main = async () => {
     y1: ti.f32,
   });
 
-  const polygon = [
+  const polygonInJS = [
     [n * 0.1, n * 0.1],
     [n * 0.1, n * 0.9],
     [n * 0.9, n * 0.9],
     [n * 0.9, n * 0.1],
     [n * 0.1, n * 0.1],
   ] as [number, number][];
-  const windowsInJS = generateWindowsAlongWall(polygon, 5, 400);
+  const polygonLength = polygonInJS.length;
+  const polygon = ti.Vector.field(2, ti.f32, [polygonLength]) as ti.Field;
+  polygon.fromArray(polygonInJS);
+  const windowsInJS = generateWindowsAlongWall(polygonInJS, 5, 400);
   const rectangleCount = windowsInJS.length;
   const windows = ti.field(Rectangle, rectangleCount);
 
@@ -66,14 +68,17 @@ let main = async () => {
     scores,
     scoresMask,
     polygon,
-    isPointWithinRectangle,
+    polygonLength,
+    isPointInsidePolygon,
   });
 
   console.log("creating kernels");
 
   const initializeScoresMask = ti.kernel(() => {
+
+
     for (let I of ti.ndrange(n, n)) {
-      scoresMask[I] = isPointWithinRectangle(points[I].xy, polygon);
+      scoresMask[I] = isPointInsidePolygon(points[I].xy, polygon, polygonLength);
     }
   });
 
@@ -167,7 +172,7 @@ let main = async () => {
   initilizeGrid();
   initilizeAnalysisPoints();
   initializeScoresMask();
-  initializeScoresMaskJS(scoresMask, polygon);
+
 
   let i = 0;
   async function frame() {
