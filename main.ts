@@ -83,32 +83,39 @@ let main = async () => {
   });
 
   const kernel = ti.kernel((time: number) => {
+    const rayPassesThroughRectangle = (
+        origin: ti.Vector,
+        ray: ti.Vector,
+        rectangle: ti.Vector
+      ) => {
+        let res = false;
+        const startRec = [rectangle.x0, rectangle.y0] as ti.Vector;
+        const endRec = [rectangle.x1, rectangle.y1] as ti.Vector;
+        const planeTangentVec = (endRec - startRec) as ti.Vector;
+        const planeNormVec = [planeTangentVec.y, -planeTangentVec.x] as ti.Vector;
+        const dot = ti.dot(planeNormVec, ray);
+        if (dot <= 0.00001) {
+          const t2 =
+            ti.dot(startRec - origin, planeNormVec) / ti.dot(ray, planeNormVec);
+          const pointInPlane = origin + ray * t2;
+          const isInside =
+            ti.dot(startRec - pointInPlane, endRec - pointInPlane) <= 0;
+          res = isInside && t2 > 0;
+        }
+        return res;
+      };
+
+
     const goesThroughRectangleCount = (position: ti.Vector) => {
       let count = 0;
       const pos = position.xy as ti.Vector;
       for (let k of ti.range(analysisPointCount)) {
         const analysisPoint = analysisPoints[k] as ti.Vector;
+        const rayDir = (analysisPoint - pos) as ti.Vector;
         for (let i of ti.range(rectangleCount)) {
           const rectangle = rectangles[i];
-          const startRec = [rectangle.x0, rectangle.y0] as ti.Vector;
-          const endRec = [rectangle.x1, rectangle.y1] as ti.Vector;
-          const planeTangentVec = (endRec - startRec) as ti.Vector;
-          const planeNormVec = [
-            planeTangentVec.y,
-            -planeTangentVec.x,
-          ] as ti.Vector;
-          const rayDir = (analysisPoint - pos) as ti.Vector;
-          const dot = ti.dot(planeNormVec, rayDir);
-          if (dot <= 0.00001) {
-            continue;
-          }
-          const t2 =
-            ti.dot(startRec - pos, planeNormVec) / ti.dot(rayDir, planeNormVec);
-          const pointInPlane = pos + rayDir * t2;
-          const isInside =
-            ti.dot(startRec - pointInPlane, endRec - pointInPlane) <= 0;
-
-          if (isInside && t2 > 0) {
+          const isInside = rayPassesThroughRectangle(pos, rayDir, rectangle);
+          if (isInside) {
             count = count + 1;
           }
         }
