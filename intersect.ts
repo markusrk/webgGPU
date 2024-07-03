@@ -11,12 +11,13 @@ export const rayIntersectsRectangle = (
     const planeNormVec = [planeTangentVec.y, -planeTangentVec.x,0] as ti.Vector;
     const dot = ti.dot(planeNormVec, ray);
     if (dot <= 0.00001) {
-      const t2 =
+      const t =
         ti.dot(startRec - origin, planeNormVec) / ti.dot(ray, planeNormVec);
-      const pointInPlane = origin + ray * t2;
+      const rayPointInPlane = origin + ray * t;     
+    
       const isInside =
-        ti.dot(startRec - pointInPlane, endRec - pointInPlane) <= 0;
-      res = isInside && t2 > 0;
+        ti.dot(startRec - rayPointInPlane, endRec - rayPointInPlane) <= 0;
+      res = isInside && t > 0;
     }
     return res;
   };
