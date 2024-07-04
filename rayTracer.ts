@@ -85,7 +85,7 @@ export const rayTrace = async (
 
   const updateTexture = ti.kernel(() => {
     const adjustmentFactor =
-      (1  /100/ ti.sqrt(rectangleCount));
+      (1  /500/ ti.sqrt(rectangleCount));
     for (let I of ti.ndrange(n, n)) {
       if (scoresMask[I] > 0) {
         const color = adjustmentFactor * scores[I];
