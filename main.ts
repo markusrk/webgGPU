@@ -1,5 +1,6 @@
 import * as ti from "taichi.js";
 import { init, rayTrace } from "./rayTracer";
+import { generateWindowsAlongWall } from "./geometryTools";
 
 const resolution = 1000;
 
@@ -16,8 +17,8 @@ const updateImage = (x, y) => {
     [resolution * 0.9, resolution * 0.1],
     [resolution * 0.1, resolution * 0.1],
   ] as [number, number][];
-
-  rayTrace(polygonInJS, windowOptions);
+  const windowsInJS = generateWindowsAlongWall(polygonInJS, windowOptions);
+  rayTrace(polygonInJS, windowsInJS);
     // worker.postMessage({type: "update", polygon: polygonInJS});
 };
 
@@ -43,7 +44,8 @@ const worker = new Worker(new URL("./worker.ts", import.meta.url), {
 
 const main = async () => {
   await init(htmlCanvas);
-  rayTrace(polygonInJS, windowOptions);
+  const windowsInJS = generateWindowsAlongWall(polygonInJS, windowOptions);
+  rayTrace(polygonInJS, windowsInJS);
 //   const offscreen = htmlCanvas.transferControlToOffscreen()
 //   worker.postMessage({type: "init", canvas: offscreen}, [offscreen]);
 //   await new Promise(resolve => setTimeout(resolve, 2000));

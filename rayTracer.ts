@@ -61,7 +61,7 @@ export const init = async (input_canvas) => {
 
 export const rayTrace = async (
   polygonInJS: [number, number][],
-  windowOptions: { windowSize: number; windowSpacing: number }
+  windowsInJS: [[number, number, number], [number, number, number]][]
 ) => {
   if (!isInitialized) {
     console.log("Triggered rayTrace before initialization was done!!!");
@@ -74,7 +74,6 @@ export const rayTrace = async (
   polygon.fromArray(polygonInJS);
   if (thisToken !== currentToken) return;
 
-  const windowsInJS = generateWindowsAlongWall(polygonInJS, windowOptions);
   const windowCount = windowsInJS.length;
   const windows = ti.Vector.field(3, ti.f32, [windowCount, 2]);
 
