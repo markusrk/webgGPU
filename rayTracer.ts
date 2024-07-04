@@ -104,7 +104,7 @@ export const rayTrace = async (
         VERTICAL_RESOLUTION,
         HORISONTAL_RESOLUTION / stepSize
       )) {
-        const I2 = [I.x, I.y * ti.i32(stepSize) + ti.i32(time)];
+        const I2 = [I.x, (I.y * ti.i32(stepSize) + ti.i32(time)+I.x*HORISONTAL_RESOLUTION/stepSize/1.5)% HORISONTAL_RESOLUTION];
         const ray = getRayForAngle(
           VERTICAL_RESOLUTION,
           HORISONTAL_RESOLUTION,
