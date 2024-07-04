@@ -79,18 +79,7 @@ export const rayTrace = async (
   const windows = ti.Vector.field(3, ti.f32, [windowCount, 2]);
 
   if (thisToken !== currentToken) return;
-  for (let i of range(windowCount)) {
-    const x0 = windowsInJS[i][0][0];
-    const x1 = windowsInJS[i][1][0];
-    const y0 = windowsInJS[i][0][1];
-    const y1 = windowsInJS[i][1][1];
-    const z0 = windowsInJS[i][0][2];
-    const z1 = windowsInJS[i][1][2];
-    const vec1 = [x0, y0, z0];
-    const vec2 = [x1, y1, z1];
-    windows.set([i, 0], vec1);
-    windows.set([i, 1], vec2);
-  }
+  windows.fromArray(windowsInJS);
 
   if (thisToken !== currentToken) return;
 
