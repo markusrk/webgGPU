@@ -3,18 +3,27 @@ import * as ti from "taichi.js";
 
 const resolution = 1000;
 
-window.raytrace = (v)=>{
-    const polygonInJS = [
-        [resolution * 0.1, resolution * 0.1],
-        [resolution * 0.1, resolution * v],
-        [resolution * 0.9, resolution * 0.9],
-        [resolution * 0.9, resolution * 0.1],
-        [resolution * 0.1, resolution * 0.1],
-    ] as [number, number][];
-    rayTrace(resolution, polygonInJS, windowOptions, htmlCanvas);
-}
+document.getElementById("inputElement")!.addEventListener("input", (e) => {
+  const v = (e.target as HTMLInputElement).value;
+  updateImage(100, 1000*Number(v));
+});
 
+const updateImage = (x,y) => {
+    console.log("x = ", x)
+    console.log("y = ", y)
+  const polygonInJS = [
+    [resolution * 0.1, resolution * 0.1],
+    [x, resolution-y],
+    [resolution * 0.9, resolution * 0.9],
+    [resolution * 0.9, resolution * 0.1],
+    [resolution * 0.1, resolution * 0.1],
+  ] as [number, number][];
 
+  console.log("polygonInJS = ", polygonInJS)
+  rayTrace(resolution, polygonInJS, windowOptions, htmlCanvas);
+};
+
+window.updateImage = updateImage
 
 const polygonInJS = [
   [resolution * 0.1, resolution * 0.1],
@@ -28,6 +37,6 @@ const htmlCanvas = document.getElementById("result_canvas")! as ti.Canvas;
 htmlCanvas.width = resolution;
 htmlCanvas.height = resolution;
 
-const windowOptions = { windowSize: 50, windowSpacing: 200 , windowHeight: 100};
+const windowOptions = { windowSize: 50, windowSpacing: 200, windowHeight: 100 };
 
 rayTrace(resolution, polygonInJS, windowOptions, htmlCanvas);
