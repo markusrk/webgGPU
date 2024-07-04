@@ -8,6 +8,7 @@
     <script>
         const dragElement = document.getElementById("dragElement");
         let offsetX, offsetY;
+        let newX, newY
         dragElement.addEventListener("mousedown", startDrag);
 
         function startDrag(event) {
@@ -20,15 +21,16 @@
         }
 
         function moveElement(event) {
-            dragElement.style.left = event.clientX - offsetX + "px";
-            dragElement.style.top = event.clientY - offsetY + "px";
-            window.updateImage(event.clientX - offsetX,event.clientY - offsetY)
+            newX = event.clientX - offsetX
+            newY = event.clientY - offsetY
+            dragElement.style.left = newX + "px";
+            dragElement.style.top = newY + "px";
+            window.updateImage(newX,newY)
         }
-
+        
         function stopDrag() {
             document.removeEventListener("mousemove", moveElement);
             document.removeEventListener("mouseup", stopDrag);
-            console.log("offsetX: ", offsetX, "offsetY: ", offsetY)
         }
     </script>
   <canvas id="result_canvas" />
