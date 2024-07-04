@@ -15,7 +15,7 @@ const VERTICAL_STEP = Math.PI / VERTICAL_RESOLUTION;
 const HORISONTAL_STEP = Math.PI / HORISONTAL_RESOLUTION;
 
 let currentToken = Symbol(); // Step 1: Initialize a unique symbol as the cancellation token
-const N = 1000
+const N = 1000;
 const htmlCanvas = document.getElementById("result_canvas")! as ti.Canvas;
 
 const points = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
@@ -23,16 +23,14 @@ const scoresMask = ti.field(ti.f32, [N, N]) as ti.Field;
 const scores = ti.field(ti.f32, [N, N]) as ti.Field;
 const pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
 
-
 export const rayTrace = async (
   polygonInJS: [number, number][],
-  windowOptions: { windowSize: number; windowSpacing: number },
+  windowOptions: { windowSize: number; windowSpacing: number }
 ) => {
   const thisToken = Symbol(); // Create a new unique symbol for this invocation
   currentToken = thisToken; // Step 2: Update the token to indicate a new operation has started
   await ti.init();
   if (thisToken !== currentToken) return;
-
 
   const polygonLength = polygonInJS.length;
   const polygon = ti.Vector.field(2, ti.f32, [polygonLength]) as ti.Field;
@@ -54,8 +52,6 @@ export const rayTrace = async (
     windows.set([i, 0], vec1);
     windows.set([i, 1], vec2);
   }
-
-
 
   if (thisToken !== currentToken) return;
 
@@ -112,12 +108,18 @@ export const rayTrace = async (
 
   const rayTrace = ti.kernel((stepSize: ti.i32, time: ti.i32) => {
     const computeScoreForPoint = (position: ti.Vector) => {
-      let score = ti.f32(0.);
+      let score = ti.f32(0);
       for (let I of ti.ndrange(
         VERTICAL_RESOLUTION,
         HORISONTAL_RESOLUTION / stepSize
       )) {
-        const I2 = [I.x, (I.y * ti.i32(stepSize) + ti.i32(time)+I.x*HORISONTAL_RESOLUTION/stepSize/1.5)% HORISONTAL_RESOLUTION];
+        const I2 = [
+          I.x,
+          (I.y * ti.i32(stepSize) +
+            ti.i32(time) +
+            (I.x * HORISONTAL_RESOLUTION) / stepSize / 1.5) %
+            HORISONTAL_RESOLUTION,
+        ];
         const ray = getRayForAngle(
           VERTICAL_RESOLUTION,
           HORISONTAL_RESOLUTION,
@@ -168,7 +170,9 @@ export const rayTrace = async (
     if (thisToken !== currentToken) return;
     i = i + 1;
     rayTrace(stepSize, i);
+    if (thisToken !== currentToken) return;
     updateTexture();
+    if (thisToken !== currentToken) return;
     canvas.setImage(pixels);
 
     i < stepSize && requestAnimationFrame(frame);
