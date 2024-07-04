@@ -20,13 +20,6 @@ export const rayTrace = async (
   const scores = ti.field(ti.f32, [n, n]) as ti.Field;
   const pixels = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
 
-  const Rectangle = ti.types.struct({
-    x0: ti.f32,
-    x1: ti.f32,
-    y0: ti.f32,
-    y1: ti.f32,
-  });
-
   const polygonLength = polygonInJS.length;
   const polygon = ti.Vector.field(2, ti.f32, [polygonLength]) as ti.Field;
   polygon.fromArray(polygonInJS);
@@ -48,9 +41,6 @@ export const rayTrace = async (
     windows.set([i, 1], vec2);
   }
 
-  const analysisPoints = ti.Vector.field(3, ti.f32, [
-    analysisPointResolutionInDegrees,
-  ]) as ti.Field;
 
   const VERTICAL_RESOLUTION = 64;
   const HORISONTAL_RESOLUTION = 256;
@@ -63,8 +53,6 @@ export const rayTrace = async (
     n,
     windows,
     rectangleCount,
-    analysisPoints,
-    analysisPointResolutionInDegrees,
     scores,
     scoresMask,
     polygon,
@@ -95,25 +83,9 @@ export const rayTrace = async (
     }
   });
 
-  const initilizeAnalysisPoints = ti.kernel(() => {
-    for (let i of ti.range(analysisPointResolutionInDegrees)) {
-      analysisPoints[i] = [n * 2 * ti.sin(i / 50), n * 2 * ti.cos(i / 50), 0];
-    }
-  });
-
-  const updateAnalysisPoint = ti.kernel((t: number) => {
-    for (let i of ti.range(analysisPointResolutionInDegrees)) {
-      analysisPoints[i] = [
-        n * 2000 * ti.sin(t / 50 + i * 1),
-        n * 2000 * ti.cos(t / 50 + i * 1),
-        2000,
-      ];
-    }
-  });
-
   const updateTexture = ti.kernel(() => {
     const adjustmentFactor =
-      (10 / analysisPointResolutionInDegrees / ti.sqrt(rectangleCount)) * 30;
+      (1  /100/ ti.sqrt(rectangleCount));
     for (let I of ti.ndrange(n, n)) {
       if (scoresMask[I] > 0) {
         const color = adjustmentFactor * scores[I];
@@ -169,14 +141,12 @@ export const rayTrace = async (
 
   let canvas = new ti.Canvas(htmlCanvas);
   initilizeGrid();
-  initilizeAnalysisPoints();
   initializeScoresMask();
 
   let i = 0;
   const stepSize = 32;
   async function frame() {
     i = i + 1;
-    // updateAnalysisPoint(i);
     rayTrace(stepSize, i);
     updateTexture();
     canvas.setImage(pixels);
