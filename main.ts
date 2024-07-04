@@ -1,4 +1,4 @@
-import { rayTrace } from "./rayTracer";
+import { rayTrace, init } from "./rayTracer";
 import * as ti from "taichi.js";
 
 const resolution = 1000;
@@ -35,5 +35,9 @@ htmlCanvas.width = resolution;
 htmlCanvas.height = resolution;
 
 const windowOptions = { windowSize: 50, windowSpacing: 200, windowHeight: 100 };
+const main = async () => {
+    await init()
+    rayTrace(polygonInJS, windowOptions);
 
-rayTrace(polygonInJS, windowOptions);
+}
+main()

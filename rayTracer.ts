@@ -23,13 +23,27 @@ const scoresMask = ti.field(ti.f32, [N, N]) as ti.Field;
 const scores = ti.field(ti.f32, [N, N]) as ti.Field;
 const pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
 
+let isInitialized = false;
+
+let canvas;
+
+export const init = async () => {
+  await ti.init();
+  canvas = new ti.Canvas(htmlCanvas);
+
+  isInitialized = true;
+}
+
 export const rayTrace = async (
   polygonInJS: [number, number][],
   windowOptions: { windowSize: number; windowSpacing: number }
 ) => {
+  if (!isInitialized) {
+    console.log("Triggered rayTrace before initialization was done!!!");
+    
+  }
   const thisToken = Symbol(); // Create a new unique symbol for this invocation
   currentToken = thisToken; // Step 2: Update the token to indicate a new operation has started
-  await ti.init();
   if (thisToken !== currentToken) return;
 
   const polygonLength = polygonInJS.length;
@@ -159,7 +173,6 @@ export const rayTrace = async (
     }
   });
   if (thisToken !== currentToken) return;
-  let canvas = new ti.Canvas(htmlCanvas);
   initilizeGrid();
   if (thisToken !== currentToken) return;
   initializeScoresMask();
