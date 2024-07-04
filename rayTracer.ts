@@ -9,25 +9,30 @@ import {
   getVscScoreAtAngle,
 } from "./rayGeneration";
 
+const VERTICAL_RESOLUTION = 64;
+const HORISONTAL_RESOLUTION = 256;
+const VERTICAL_STEP = Math.PI / VERTICAL_RESOLUTION;
+const HORISONTAL_STEP = Math.PI / HORISONTAL_RESOLUTION;
+
 let currentToken = Symbol(); // Step 1: Initialize a unique symbol as the cancellation token
+const N = 1000
+const htmlCanvas = document.getElementById("result_canvas")! as ti.Canvas;
+
+const points = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
+const scoresMask = ti.field(ti.f32, [N, N]) as ti.Field;
+const scores = ti.field(ti.f32, [N, N]) as ti.Field;
+const pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
+
 
 export const rayTrace = async (
-  n: number,
   polygonInJS: [number, number][],
   windowOptions: { windowSize: number; windowSpacing: number },
-  htmlCanvas: HTMLCanvasElement
 ) => {
   const thisToken = Symbol(); // Create a new unique symbol for this invocation
   currentToken = thisToken; // Step 2: Update the token to indicate a new operation has started
-
   await ti.init();
-
   if (thisToken !== currentToken) return;
 
-  const points = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
-  const scoresMask = ti.field(ti.f32, [n, n]) as ti.Field;
-  const scores = ti.field(ti.f32, [n, n]) as ti.Field;
-  const pixels = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
 
   const polygonLength = polygonInJS.length;
   const polygon = ti.Vector.field(2, ti.f32, [polygonLength]) as ti.Field;
@@ -50,17 +55,14 @@ export const rayTrace = async (
     windows.set([i, 1], vec2);
   }
 
-  const VERTICAL_RESOLUTION = 64;
-  const HORISONTAL_RESOLUTION = 256;
-  const VERTICAL_STEP = Math.PI / VERTICAL_RESOLUTION;
-  const HORISONTAL_STEP = Math.PI / HORISONTAL_RESOLUTION;
+
 
   if (thisToken !== currentToken) return;
 
   ti.addToKernelScope({
     points,
     pixels,
-    n,
+    N,
     windows,
     rectangleCount,
     scores,
@@ -79,7 +81,7 @@ export const rayTrace = async (
   });
 
   const initializeScoresMask = ti.kernel(() => {
-    for (let I of ti.ndrange(n, n)) {
+    for (let I of ti.ndrange(N, N)) {
       scoresMask[I] = isPointInsidePolygon(
         points[I].xy,
         polygon,
@@ -89,14 +91,14 @@ export const rayTrace = async (
   });
 
   const initilizeGrid = ti.kernel(() => {
-    for (let I of ti.ndrange(n, n)) {
+    for (let I of ti.ndrange(N, N)) {
       points[I] = [I[0], I[1], 0];
     }
   });
 
   const updateTexture = ti.kernel(() => {
     const adjustmentFactor = 3 / ti.sqrt(rectangleCount);
-    for (let I of ti.ndrange(n, n)) {
+    for (let I of ti.ndrange(N, N)) {
       if (scoresMask[I] > 0) {
         const color = adjustmentFactor * scores[I];
         pixels[I] = [color, color, color];
@@ -144,7 +146,7 @@ export const rayTrace = async (
       return score;
     };
 
-    for (let I of ti.ndrange(n, n)) {
+    for (let I of ti.ndrange(N, N)) {
       for (let i of ti.range(1)) {
         if (scoresMask[I] > 0) {
           scores[I] =

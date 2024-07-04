@@ -5,25 +5,22 @@ const resolution = 1000;
 
 document.getElementById("inputElement")!.addEventListener("input", (e) => {
   const v = (e.target as HTMLInputElement).value;
-  updateImage(100, 1000*Number(v));
+  updateImage(100, 1000 * Number(v));
 });
 
-const updateImage = (x,y) => {
-    console.log("x = ", x)
-    console.log("y = ", y)
+const updateImage = (x, y) => {
   const polygonInJS = [
     [resolution * 0.1, resolution * 0.1],
-    [x, resolution-y],
+    [x, resolution - y],
     [resolution * 0.9, resolution * 0.9],
     [resolution * 0.9, resolution * 0.1],
     [resolution * 0.1, resolution * 0.1],
   ] as [number, number][];
 
-  console.log("polygonInJS = ", polygonInJS)
-  rayTrace(resolution, polygonInJS, windowOptions, htmlCanvas);
+  rayTrace(polygonInJS, windowOptions);
 };
 
-window.updateImage = updateImage
+window.updateImage = updateImage;
 
 const polygonInJS = [
   [resolution * 0.1, resolution * 0.1],
@@ -39,4 +36,4 @@ htmlCanvas.height = resolution;
 
 const windowOptions = { windowSize: 50, windowSpacing: 200, windowHeight: 100 };
 
-rayTrace(resolution, polygonInJS, windowOptions, htmlCanvas);
+rayTrace(polygonInJS, windowOptions);
