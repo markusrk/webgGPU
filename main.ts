@@ -1,5 +1,5 @@
-import { rayTrace, init } from "./rayTracer";
 import * as ti from "taichi.js";
+import { init, rayTrace } from "./rayTracer";
 
 const resolution = 1000;
 
@@ -18,6 +18,7 @@ const updateImage = (x, y) => {
   ] as [number, number][];
 
   rayTrace(polygonInJS, windowOptions);
+    // worker.postMessage({type: "update", polygon: polygonInJS});
 };
 
 window.updateImage = updateImage;
@@ -35,14 +36,17 @@ htmlCanvas.width = resolution;
 htmlCanvas.height = resolution;
 
 const windowOptions = { windowSize: 50, windowSpacing: 200, windowHeight: 100 };
+
+const worker = new Worker(new URL("./worker.ts", import.meta.url), {
+  type: "module",
+});
+
 const main = async () => {
-    const htmlCanvas = document.getElementById("result_canvas")! as ti.Canvas;
-
-    await init(htmlCanvas)
-    rayTrace(polygonInJS, windowOptions);
-
-}
-main()
-
-const worker = new Worker(new URL("./worker.ts", import.meta.url),{type: "module"});
-console.log("worker = ", worker)
+  await init(htmlCanvas);
+  rayTrace(polygonInJS, windowOptions);
+//   const offscreen = htmlCanvas.transferControlToOffscreen()
+//   worker.postMessage({type: "init", canvas: offscreen}, [offscreen]);
+//   await new Promise(resolve => setTimeout(resolve, 2000));
+//   worker.postMessage({type: "update", polygon: polygonInJS});
+};
+main();

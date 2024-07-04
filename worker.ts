@@ -1,4 +1,4 @@
-import { init } from "./rayTracer";
+import { init, rayTrace } from "./rayTracer";
 
 let canvas = null;
 let ctxWorker = null;
@@ -19,13 +19,13 @@ type WorkerEvent =
 
 // Waiting to receive the OffScreenCanvas
 self.onmessage = async (event) => {
-  if (event.data === "init") {
+  if (event.data.type === "init") {
     canvas = event.data.canvas;
     canvas!.width = 1000;
     canvas!.height = 1000;
-    await init()
+    await init(canvas)
 
   } else {
-    
+    rayTrace(event.data.polygon, { windowSize: 50, windowSpacing: 200 });
   }
 };
