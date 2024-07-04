@@ -1,5 +1,35 @@
-
+<head>
+  <script type="module" src="main.ts"></script>
+</head>
 <body>
-    <canvas id="result_canvas" />
-    <script type="module" src="main.ts"></script>
+    <div id="dragElement" style="position: absolute; top: 500px; left: 500px; width: 10px; height: 10px; background-color: blue; border-radius: 50%; cursor: move;"></div>
+    <input id="inputElement" type="number" min="0" max="1" step="0.05" style="position: absolute; top: 0; right: 0; margin: 10px;" />
+
+    <script>
+        const dragElement = document.getElementById("dragElement");
+        let offsetX, offsetY;
+        dragElement.addEventListener("mousedown", startDrag);
+
+        function startDrag(event) {
+            console.log("started drag")
+            offsetX = event.clientX - dragElement.offsetLeft;
+            offsetY = event.clientY - dragElement.offsetTop;
+            console.log("offsetX: ", offsetX, "offsetY: ", offsetY)
+            document.addEventListener("mousemove", moveElement);
+            document.addEventListener("mouseup", stopDrag);
+        }
+
+        function moveElement(event) {
+            dragElement.style.left = event.clientX - offsetX + "px";
+            dragElement.style.top = event.clientY - offsetY + "px";
+            window.updateImage(event.clientX - offsetX,event.clientY - offsetY)
+        }
+
+        function stopDrag() {
+            document.removeEventListener("mousemove", moveElement);
+            document.removeEventListener("mouseup", stopDrag);
+            console.log("offsetX: ", offsetX, "offsetY: ", offsetY)
+        }
+    </script>
+  <canvas id="result_canvas" />
 </body>
