@@ -8,8 +8,8 @@ export const computeRayDirection = (theta: number, alpha: number) => {
 };
 
 export const getRayForAngle = (verticalResolution, horisontalResolution, i, j): ti.Vector => {
-  const verticalStep = 3.14159265359/2 / verticalResolution;
-  const horizontalStep = 3.14159265359*2 / horisontalResolution;
+  const verticalStep = 3.14159265359 / 2 / verticalResolution;
+  const horizontalStep = (3.14159265359 * 2) / horisontalResolution;
 
   const theta = i * verticalStep;
   const alpha = j * horizontalStep;
@@ -20,5 +20,4 @@ export const getVscScoreAtAngle = (rayDirection, verticalStep, horizontalStep) =
   const vscAtAngle = 1.0 + 2.0 * rayDirection[2];
   const deltaOmega = ti.norm(rayDirection.zy) * verticalStep * horizontalStep; // the area of the rectangle this ray covers on the unit sphere
   return vscAtAngle * deltaOmega;
-}
-
+};

@@ -3,11 +3,7 @@ import { range } from "taichi.js/dist/taichi";
 import { generateWindowsAlongWall } from "./geometryTools";
 import { isPointInsidePolygon } from "./pointInPolygon";
 import { rayIntersectsRectangle } from "./intersect";
-import {
-  computeRayDirection,
-  getRayForAngle,
-  getVscScoreAtAngle,
-} from "./rayGeneration";
+import { computeRayDirection, getRayForAngle, getVscScoreAtAngle } from "./rayGeneration";
 
 const VERTICAL_RESOLUTION = 64;
 const HORISONTAL_RESOLUTION = 256;
@@ -91,11 +87,7 @@ export const rayTrace = async (
 
   const updateScoresMask = ti.kernel(() => {
     for (let I of ti.ndrange(N, N)) {
-      scoresMask[I] = isPointInsidePolygon(
-        points[I].xy,
-        polygon,
-        polygonLength
-      );
+      scoresMask[I] = isPointInsidePolygon(points[I].xy, polygon, polygonLength);
     }
   });
 
@@ -114,39 +106,20 @@ export const rayTrace = async (
   const rayTrace = ti.kernel((stepSize: ti.i32, time: ti.i32) => {
     const computeScoreForPoint = (position: ti.Vector) => {
       let score = ti.f32(0);
-      for (let I of ti.ndrange(
-        VERTICAL_RESOLUTION,
-        HORISONTAL_RESOLUTION / stepSize
-      )) {
+      for (let I of ti.ndrange(VERTICAL_RESOLUTION, HORISONTAL_RESOLUTION / stepSize)) {
         const I2 = [
           I.x,
-          (I.y * ti.i32(stepSize) +
-            ti.i32(time) +
-            (I.x * HORISONTAL_RESOLUTION) / stepSize / 1.5) %
+          (I.y * ti.i32(stepSize) + ti.i32(time) + (I.x * HORISONTAL_RESOLUTION) / stepSize / 1.5) %
             HORISONTAL_RESOLUTION,
         ];
-        const ray = getRayForAngle(
-          VERTICAL_RESOLUTION,
-          HORISONTAL_RESOLUTION,
-          I2[0],
-          I2[1]
-        );
-        const scoreForAngle = getVscScoreAtAngle(
-          ray,
-          VERTICAL_STEP,
-          HORISONTAL_STEP
-        );
+        const ray = getRayForAngle(VERTICAL_RESOLUTION, HORISONTAL_RESOLUTION, I2[0], I2[1]);
+        const scoreForAngle = getVscScoreAtAngle(ray, VERTICAL_STEP, HORISONTAL_STEP);
         for (let i of ti.range(windowCount)) {
           // @ts-ignore
           const recStart = windows[(i, 0)];
           // @ts-ignore
           const recEnd = windows[(i, 1)];
-          const isInside = rayIntersectsRectangle(
-            position,
-            ray,
-            recStart,
-            recEnd
-          );
+          const isInside = rayIntersectsRectangle(position, ray, recStart, recEnd);
           if (isInside) {
             score = score + scoreForAngle;
           }
@@ -159,8 +132,7 @@ export const rayTrace = async (
       for (let i of ti.range(1)) {
         if (scoresMask[I] > 0) {
           scores[I] =
-            (scores[I] * (time - 1)) / ti.max(time, 1) +
-            (computeScoreForPoint(points[I]) * stepSize) / ti.max(time, 1);
+            (scores[I] * (time - 1)) / ti.max(time, 1) + (computeScoreForPoint(points[I]) * stepSize) / ti.max(time, 1);
         }
       }
     }

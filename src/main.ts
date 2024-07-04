@@ -19,7 +19,7 @@ const updateImage = (x, y) => {
   ] as [number, number][];
   const windowsInJS = generateWindowsAlongWall(polygonInJS, windowOptions);
   rayTrace(polygonInJS, windowsInJS);
-    // worker.postMessage({type: "update", polygon: polygonInJS});
+  // worker.postMessage({type: "update", polygon: polygonInJS});
 };
 
 // @ts-ignore
@@ -47,9 +47,9 @@ const main = async () => {
   await init(htmlCanvas);
   const windowsInJS = generateWindowsAlongWall(polygonInJS, windowOptions);
   rayTrace(polygonInJS, windowsInJS);
-//   const offscreen = htmlCanvas.transferControlToOffscreen()
-//   worker.postMessage({type: "init", canvas: offscreen}, [offscreen]);
-//   await new Promise(resolve => setTimeout(resolve, 2000));
-//   worker.postMessage({type: "update", polygon: polygonInJS});
+  //   const offscreen = htmlCanvas.transferControlToOffscreen()
+  //   worker.postMessage({type: "init", canvas: offscreen}, [offscreen]);
+  //   await new Promise(resolve => setTimeout(resolve, 2000));
+  //   worker.postMessage({type: "update", polygon: polygonInJS});
 };
 main();
