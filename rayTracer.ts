@@ -94,7 +94,7 @@ export const rayTrace = async (
       analysisPoints[i] = [
         n * 2000 * ti.sin(t / 50 + i * 1),
         n * 2000 * ti.cos(t / 50 + i * 1),
-        0,
+        2000,
       ];
     }
   });
