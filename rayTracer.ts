@@ -3,6 +3,7 @@ import { range } from "taichi.js/dist/taichi";
 import { generateWindowsAlongWall } from "./geometryTools";
 import { isPointInsidePolygon } from "./pointInPolygon";
 import { rayIntersectsRectangle } from "./intersect";
+import { computeRayDirection, getRayForAngle } from "./rayGeneration";
 
 export const rayTrace = async (
   n: number,
@@ -51,6 +52,11 @@ export const rayTrace = async (
     analysisPointResolutionInDegrees,
   ]) as ti.Field;
 
+  const VERTICAL_RESOLUTION = 64;
+  const HORISONTAL_RESOLUTION = 256;
+  const VERTICAL_STEP = Math.PI / VERTICAL_RESOLUTION;
+  const HORISONTAL_STEP = Math.PI / HORISONTAL_RESOLUTION;
+
   ti.addToKernelScope({
     points,
     pixels,
@@ -65,6 +71,12 @@ export const rayTrace = async (
     polygonLength,
     isPointInsidePolygon,
     rayIntersectsRectangle,
+    getRayForAngle,
+    computeRayDirection,
+    VERTICAL_RESOLUTION,
+    HORISONTAL_RESOLUTION,
+    VERTICAL_STEP,
+    HORISONTAL_STEP,
   });
 
   const initializeScoresMask = ti.kernel(() => {
@@ -101,7 +113,7 @@ export const rayTrace = async (
 
   const updateTexture = ti.kernel(() => {
     const adjustmentFactor =
-      10 / analysisPointResolutionInDegrees / ti.sqrt(rectangleCount);
+      (10 / analysisPointResolutionInDegrees / ti.sqrt(rectangleCount)) * 30;
     for (let I of ti.ndrange(n, n)) {
       if (scoresMask[I] > 0) {
         const color = adjustmentFactor * scores[I];
@@ -112,23 +124,21 @@ export const rayTrace = async (
     }
   });
 
-  const rayTrace = ti.kernel((stepSize, time: number) => {
+  const rayTrace = ti.kernel((stepSize: ti.i32, time: ti.i32) => {
     const goesThroughRectangleCount = (position: ti.Vector) => {
       let count = 0;
-      // for (let I of ti.ndrange(VERTICAL_RESOLUTION/stepSize, HORISONTAL_RESOLUTION/stepSize)) {
-      //   const I2 = I * stepSize + time;
-      //   const ray = getRayForAngle(
-      //     VERTICAL_RESOLUTION,
-      //     HORISONTAL_RESOLUTION,
-      //     I2[0],
-      //     I2[1]
-      //   )*2000;
-      for (let I of ti.range(analysisPointResolutionInDegrees/stepSize)) {
-        const I2 = I+ ti.i32(stepSize) + ti.i32(time);
-        
-
-        const analysisPoint = analysisPoints[I2] as ti.Vector;
-        const ray = (analysisPoint - position) as ti.Vector;
+      for (let I of ti.ndrange(
+        VERTICAL_RESOLUTION,
+        HORISONTAL_RESOLUTION / stepSize
+      )) {
+        const I2 = [I.x, I.y * ti.i32(stepSize) + ti.i32(time)];
+        const ray =
+          getRayForAngle(
+            VERTICAL_RESOLUTION,
+            HORISONTAL_RESOLUTION,
+            I2[0],
+            I2[1]
+          );
         for (let i of ti.range(rectangleCount)) {
           const recStart = windows[(i, 0)];
           const recEnd = windows[(i, 1)];
@@ -163,7 +173,7 @@ export const rayTrace = async (
   initializeScoresMask();
 
   let i = 0;
-  const stepSize = 1000;
+  const stepSize = 32;
   async function frame() {
     i = i + 1;
     // updateAnalysisPoint(i);
