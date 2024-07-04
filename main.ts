@@ -22,6 +22,7 @@ const updateImage = (x, y) => {
     // worker.postMessage({type: "update", polygon: polygonInJS});
 };
 
+// @ts-ignore
 window.updateImage = updateImage;
 
 const polygonInJS = [

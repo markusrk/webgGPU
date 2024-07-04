@@ -137,7 +137,9 @@ export const rayTrace = async (
           HORISONTAL_STEP
         );
         for (let i of ti.range(windowCount)) {
+          // @ts-ignore
           const recStart = windows[(i, 0)];
+          // @ts-ignore
           const recEnd = windows[(i, 1)];
           const isInside = rayIntersectsRectangle(
             position,
