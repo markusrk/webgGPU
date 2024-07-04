@@ -48,8 +48,15 @@ export const init = async () => {
     HORISONTAL_STEP,
   });
 
+  const initilizeGrid = ti.kernel(() => {
+    for (let I of ti.ndrange(N, N)) {
+      points[I] = [I[0], I[1], 0];
+    }
+  });
+  initilizeGrid();
+
   isInitialized = true;
-}
+};
 
 export const rayTrace = async (
   polygonInJS: [number, number][],
@@ -57,22 +64,21 @@ export const rayTrace = async (
 ) => {
   if (!isInitialized) {
     console.log("Triggered rayTrace before initialization was done!!!");
-    
   }
   const thisToken = Symbol(); // Create a new unique symbol for this invocation
   currentToken = thisToken; // Step 2: Update the token to indicate a new operation has started
-  
+
   const polygonLength = polygonInJS.length;
   const polygon = ti.Vector.field(2, ti.f32, [polygonLength]) as ti.Field;
   polygon.fromArray(polygonInJS);
   if (thisToken !== currentToken) return;
-  
+
   const windowsInJS = generateWindowsAlongWall(polygonInJS, windowOptions);
-  const rectangleCount = windowsInJS.length;
-  const windows = ti.Vector.field(3, ti.f32, [rectangleCount, 2]);
-  
+  const windowCount = windowsInJS.length;
+  const windows = ti.Vector.field(3, ti.f32, [windowCount, 2]);
+
   if (thisToken !== currentToken) return;
-  for (let i of range(rectangleCount)) {
+  for (let i of range(windowCount)) {
     const x0 = windowsInJS[i][0][0];
     const x1 = windowsInJS[i][1][0];
     const y0 = windowsInJS[i][0][1];
@@ -89,12 +95,12 @@ export const rayTrace = async (
 
   ti.addToKernelScope({
     windows,
-    rectangleCount,
+    windowCount,
     polygon,
     polygonLength,
   });
 
-  const initializeScoresMask = ti.kernel(() => {
+  const updateScoresMask = ti.kernel(() => {
     for (let I of ti.ndrange(N, N)) {
       scoresMask[I] = isPointInsidePolygon(
         points[I].xy,
@@ -104,14 +110,8 @@ export const rayTrace = async (
     }
   });
 
-  const initilizeGrid = ti.kernel(() => {
-    for (let I of ti.ndrange(N, N)) {
-      points[I] = [I[0], I[1], 0];
-    }
-  });
-
   const updateTexture = ti.kernel(() => {
-    const adjustmentFactor = 3 / ti.sqrt(rectangleCount);
+    const adjustmentFactor = 3 / ti.sqrt(windowCount);
     for (let I of ti.ndrange(N, N)) {
       if (scoresMask[I] > 0) {
         const color = adjustmentFactor * scores[I];
@@ -121,8 +121,6 @@ export const rayTrace = async (
       }
     }
   });
-
-  if (thisToken !== currentToken) return;
 
   const rayTrace = ti.kernel((stepSize: ti.i32, time: ti.i32) => {
     const computeScoreForPoint = (position: ti.Vector) => {
@@ -149,7 +147,7 @@ export const rayTrace = async (
           VERTICAL_STEP,
           HORISONTAL_STEP
         );
-        for (let i of ti.range(rectangleCount)) {
+        for (let i of ti.range(windowCount)) {
           const recStart = windows[(i, 0)];
           const recEnd = windows[(i, 1)];
           const isInside = rayIntersectsRectangle(
@@ -177,9 +175,7 @@ export const rayTrace = async (
     }
   });
   if (thisToken !== currentToken) return;
-  initilizeGrid();
-  if (thisToken !== currentToken) return;
-  initializeScoresMask();
+  updateScoresMask();
   if (thisToken !== currentToken) return;
   let i = 0;
   const stepSize = 32;
