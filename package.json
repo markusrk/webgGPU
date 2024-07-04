@@ -2,7 +2,7 @@
   "name": "webgpu",
   "version": "1.0.0",
   "description": "Experiment with doing daylight calculations on webgpu",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "dev": "vite",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -12,5 +12,8 @@
   "dependencies": {
     "taichi.js": "^0.0.36",
     "vite": "^5.3.2"
+  },
+  "prettier": {
+    "printWidth": 120
   }
 }

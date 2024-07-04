@@ -33,10 +33,7 @@ self.onmessage = async (event) => {
       windowSpacing: 200,
       windowHeight: 100,
     };
-    const windowsInJS = generateWindowsAlongWall(
-      event.data.polygon,
-      windowOptions
-    );
+    const windowsInJS = generateWindowsAlongWall(event.data.polygon, windowOptions);
     rayTrace(event.data.polygon, windowsInJS);
   }
 };
