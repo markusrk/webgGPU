@@ -16,7 +16,6 @@ const HORISONTAL_STEP = Math.PI / HORISONTAL_RESOLUTION;
 
 let currentToken = Symbol(); // Step 1: Initialize a unique symbol as the cancellation token
 const N = 1000;
-const htmlCanvas = document.getElementById("result_canvas")! as ti.Canvas;
 
 const points = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
 const scoresMask = ti.field(ti.f32, [N, N]) as ti.Field;
@@ -25,9 +24,11 @@ const pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
 
 let isInitialized = false;
 
+let htmlCanvas;
 let canvas;
 
-export const init = async () => {
+export const init = async (input_canvas) => {
+  htmlCanvas = input_canvas;
   await ti.init();
   canvas = new ti.Canvas(htmlCanvas);
 

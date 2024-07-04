@@ -36,7 +36,9 @@ htmlCanvas.height = resolution;
 
 const windowOptions = { windowSize: 50, windowSpacing: 200, windowHeight: 100 };
 const main = async () => {
-    await init()
+    const htmlCanvas = document.getElementById("result_canvas")! as ti.Canvas;
+
+    await init(htmlCanvas)
     rayTrace(polygonInJS, windowOptions);
 
 }
