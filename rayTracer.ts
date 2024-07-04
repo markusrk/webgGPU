@@ -65,8 +65,8 @@ export const rayTrace = async (
   if (!isInitialized) {
     console.log("Triggered rayTrace before initialization was done!!!");
   }
-  const thisToken = Symbol(); // Create a new unique symbol for this invocation
-  currentToken = thisToken; // Step 2: Update the token to indicate a new operation has started
+  const thisToken = Symbol();
+  currentToken = thisToken;
 
   const polygonLength = polygonInJS.length;
   const polygon = ti.Vector.field(2, ti.f32, [polygonLength]) as ti.Field;
