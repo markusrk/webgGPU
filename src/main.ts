@@ -3,29 +3,8 @@ import { init, rayTrace } from "./rayTracer";
 import { generateWindowsAlongWall } from "./geometryTools";
 
 const resolution = 1000;
-
-document.getElementById("inputElement")!.addEventListener("input", (e) => {
-  const v = (e.target as HTMLInputElement).value;
-  updateImage(100, 1000 * Number(v));
-});
-
-const updateImage = (x, y) => {
-  const polygonInJS = [
-    [resolution * 0.1, resolution * 0.1],
-    [x, resolution - y],
-    [resolution * 0.9, resolution * 0.9],
-    [resolution * 0.9, resolution * 0.1],
-    [resolution * 0.1, resolution * 0.1],
-  ] as [number, number][];
-  const windowsInJS = generateWindowsAlongWall(polygonInJS, windowOptions);
-  rayTrace(polygonInJS, windowsInJS);
-  // worker.postMessage({type: "update", polygon: polygonInJS});
-};
-
-// @ts-ignore
-window.updateImage = updateImage;
-
-const polygonInJS = [
+const defaultWindowOptions = { windowSize: 50, windowSpacing: 200, windowHeight: 100 };
+let polygonInJS = [
   [resolution * 0.1, resolution * 0.1],
   [resolution * 0.1, resolution * 0.4],
   [resolution * 0.9, resolution * 0.9],
@@ -33,11 +12,37 @@ const polygonInJS = [
   [resolution * 0.1, resolution * 0.1],
 ] as [number, number][];
 
+document.getElementById("windowSize")!.addEventListener("input", (e) => {
+  const v = (e.target as HTMLInputElement).value;
+  updateImage(polygonInJS,{...defaultWindowOptions, windowSize: parseInt(v)});
+});
+
+const updateImage = (polygonInJS, windowOptions) => {
+  const windowsInJS = generateWindowsAlongWall(polygonInJS, windowOptions);
+  rayTrace(polygonInJS, windowsInJS);
+  // worker.postMessage({type: "update", polygon: polygonInJS});
+};
+
+const updateCoordinate = (x, y) => {
+  polygonInJS = [
+    [resolution * 0.1, resolution * 0.1],
+    [x, resolution - y],
+    [resolution * 0.9, resolution * 0.9],
+    [resolution * 0.9, resolution * 0.1],
+    [resolution * 0.1, resolution * 0.1],
+  ] as [number, number][];
+  updateImage(polygonInJS, defaultWindowOptions);
+}
+
+// @ts-ignore
+window.updateCoordinate = updateCoordinate;
+
+
+
 const htmlCanvas = document.getElementById("result_canvas")! as ti.Canvas;
 htmlCanvas.width = resolution;
 htmlCanvas.height = resolution;
 
-const windowOptions = { windowSize: 50, windowSpacing: 200, windowHeight: 100 };
 
 const worker = new Worker(new URL("./worker.ts", import.meta.url), {
   type: "module",
@@ -45,7 +50,7 @@ const worker = new Worker(new URL("./worker.ts", import.meta.url), {
 
 const main = async () => {
   await init(htmlCanvas);
-  const windowsInJS = generateWindowsAlongWall(polygonInJS, windowOptions);
+  const windowsInJS = generateWindowsAlongWall(polygonInJS, defaultWindowOptions);
   rayTrace(polygonInJS, windowsInJS);
   //   const offscreen = htmlCanvas.transferControlToOffscreen()
   //   worker.postMessage({type: "init", canvas: offscreen}, [offscreen]);
