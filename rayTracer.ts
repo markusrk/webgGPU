@@ -31,6 +31,23 @@ export const init = async () => {
   await ti.init();
   canvas = new ti.Canvas(htmlCanvas);
 
+  ti.addToKernelScope({
+    points,
+    pixels,
+    N,
+    scores,
+    scoresMask,
+    isPointInsidePolygon,
+    rayIntersectsRectangle,
+    getRayForAngle,
+    computeRayDirection,
+    getVscScoreAtAngle,
+    VERTICAL_RESOLUTION,
+    HORISONTAL_RESOLUTION,
+    VERTICAL_STEP,
+    HORISONTAL_STEP,
+  });
+
   isInitialized = true;
 }
 
@@ -44,16 +61,17 @@ export const rayTrace = async (
   }
   const thisToken = Symbol(); // Create a new unique symbol for this invocation
   currentToken = thisToken; // Step 2: Update the token to indicate a new operation has started
-  if (thisToken !== currentToken) return;
-
+  
   const polygonLength = polygonInJS.length;
   const polygon = ti.Vector.field(2, ti.f32, [polygonLength]) as ti.Field;
   polygon.fromArray(polygonInJS);
-
+  if (thisToken !== currentToken) return;
+  
   const windowsInJS = generateWindowsAlongWall(polygonInJS, windowOptions);
   const rectangleCount = windowsInJS.length;
   const windows = ti.Vector.field(3, ti.f32, [rectangleCount, 2]);
-
+  
+  if (thisToken !== currentToken) return;
   for (let i of range(rectangleCount)) {
     const x0 = windowsInJS[i][0][0];
     const x1 = windowsInJS[i][1][0];
@@ -70,24 +88,10 @@ export const rayTrace = async (
   if (thisToken !== currentToken) return;
 
   ti.addToKernelScope({
-    points,
-    pixels,
-    N,
     windows,
     rectangleCount,
-    scores,
-    scoresMask,
     polygon,
     polygonLength,
-    isPointInsidePolygon,
-    rayIntersectsRectangle,
-    getRayForAngle,
-    computeRayDirection,
-    getVscScoreAtAngle,
-    VERTICAL_RESOLUTION,
-    HORISONTAL_RESOLUTION,
-    VERTICAL_STEP,
-    HORISONTAL_STEP,
   });
 
   const initializeScoresMask = ti.kernel(() => {
