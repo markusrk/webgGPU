@@ -138,7 +138,7 @@ export const rayTrace = async (
     for (let I of ti.ndrange(n, n)) {
       for (let i of ti.range(1)) {
         if (scoresMask[I] > 0) {
-          scores[I] = goesThroughRectangleCount(points[I]);
+          scores[I] = scores[I]*(time-1)/ti.max(time,1) + goesThroughRectangleCount(points[I])*1/ti.max(time,1);
         }
       }
     }
