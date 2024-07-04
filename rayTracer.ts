@@ -13,8 +13,6 @@ export const rayTrace = async (
 ) => {
   await ti.init();
 
-  const analysisPointResolutionInDegrees = 10000;
-
   const points = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
   const scoresMask = ti.field(ti.f32, [n, n]) as ti.Field;
   const scores = ti.field(ti.f32, [n, n]) as ti.Field;
