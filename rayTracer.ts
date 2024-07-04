@@ -12,7 +12,7 @@ export const rayTrace = async (
 ) => {
   await ti.init();
 
-  const analysisPointResolutionInDegrees = 1000;
+  const analysisPointResolutionInDegrees = 10000;
 
   const points = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
   const scoresMask = ti.field(ti.f32, [n, n]) as ti.Field;
@@ -85,7 +85,7 @@ export const rayTrace = async (
 
   const initilizeAnalysisPoints = ti.kernel(() => {
     for (let i of ti.range(analysisPointResolutionInDegrees)) {
-      analysisPoints[i] = [n * 2 * ti.sin(i / 50), n * 2 * ti.cos(i / 50),0];
+      analysisPoints[i] = [n * 2 * ti.sin(i / 50), n * 2 * ti.cos(i / 50), 0];
     }
   });
 
@@ -112,18 +112,29 @@ export const rayTrace = async (
     }
   });
 
-  const rayTrace = ti.kernel((time: number) => {
+  const rayTrace = ti.kernel((stepSize, time: number) => {
     const goesThroughRectangleCount = (position: ti.Vector) => {
       let count = 0;
-      for (let k of ti.range(analysisPointResolutionInDegrees)) {
-        const analysisPoint = analysisPoints[k] as ti.Vector;
-        const rayDir = (analysisPoint - position) as ti.Vector;
+      // for (let I of ti.ndrange(VERTICAL_RESOLUTION/stepSize, HORISONTAL_RESOLUTION/stepSize)) {
+      //   const I2 = I * stepSize + time;
+      //   const ray = getRayForAngle(
+      //     VERTICAL_RESOLUTION,
+      //     HORISONTAL_RESOLUTION,
+      //     I2[0],
+      //     I2[1]
+      //   )*2000;
+      for (let I of ti.range(analysisPointResolutionInDegrees/stepSize)) {
+        const I2 = I+ ti.i32(stepSize) + ti.i32(time);
+        
+
+        const analysisPoint = analysisPoints[I2] as ti.Vector;
+        const ray = (analysisPoint - position) as ti.Vector;
         for (let i of ti.range(rectangleCount)) {
           const recStart = windows[(i, 0)];
           const recEnd = windows[(i, 1)];
           const isInside = rayIntersectsRectangle(
             position,
-            rayDir,
+            ray,
             recStart,
             recEnd
           );
@@ -138,7 +149,9 @@ export const rayTrace = async (
     for (let I of ti.ndrange(n, n)) {
       for (let i of ti.range(1)) {
         if (scoresMask[I] > 0) {
-          scores[I] = scores[I]*(time-1)/ti.max(time,1) + goesThroughRectangleCount(points[I])*1/ti.max(time,1);
+          scores[I] =
+            (scores[I] * (time - 1)) / ti.max(time, 1) +
+            (goesThroughRectangleCount(points[I]) * stepSize) / ti.max(time, 1);
         }
       }
     }
@@ -150,14 +163,15 @@ export const rayTrace = async (
   initializeScoresMask();
 
   let i = 0;
+  const stepSize = 1000;
   async function frame() {
     i = i + 1;
-    updateAnalysisPoint(i);
-    rayTrace(i);
+    // updateAnalysisPoint(i);
+    rayTrace(stepSize, i);
     updateTexture();
     canvas.setImage(pixels);
 
-    requestAnimationFrame(frame);
+    i < stepSize && requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
 };
