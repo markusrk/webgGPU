@@ -9,13 +9,20 @@ import {
   getVscScoreAtAngle,
 } from "./rayGeneration";
 
+let currentToken = Symbol(); // Step 1: Initialize a unique symbol as the cancellation token
+
 export const rayTrace = async (
   n: number,
   polygonInJS: [number, number][],
   windowOptions: { windowSize: number; windowSpacing: number },
   htmlCanvas: HTMLCanvasElement
 ) => {
+  const thisToken = Symbol(); // Create a new unique symbol for this invocation
+  currentToken = thisToken; // Step 2: Update the token to indicate a new operation has started
+
   await ti.init();
+
+  if (thisToken !== currentToken) return;
 
   const points = ti.Vector.field(3, ti.f32, [n, n]) as ti.Field;
   const scoresMask = ti.field(ti.f32, [n, n]) as ti.Field;
@@ -47,6 +54,8 @@ export const rayTrace = async (
   const HORISONTAL_RESOLUTION = 256;
   const VERTICAL_STEP = Math.PI / VERTICAL_RESOLUTION;
   const HORISONTAL_STEP = Math.PI / HORISONTAL_RESOLUTION;
+
+  if (thisToken !== currentToken) return;
 
   ti.addToKernelScope({
     points,
@@ -97,6 +106,8 @@ export const rayTrace = async (
     }
   });
 
+  if (thisToken !== currentToken) return;
+
   const rayTrace = ti.kernel((stepSize: ti.i32, time: ti.i32) => {
     const computeScoreForPoint = (position: ti.Vector) => {
       let score = ti.f32(0.);
@@ -143,14 +154,16 @@ export const rayTrace = async (
       }
     }
   });
-
+  if (thisToken !== currentToken) return;
   let canvas = new ti.Canvas(htmlCanvas);
   initilizeGrid();
+  if (thisToken !== currentToken) return;
   initializeScoresMask();
-
+  if (thisToken !== currentToken) return;
   let i = 0;
   const stepSize = 32;
   async function frame() {
+    if (thisToken !== currentToken) return;
     i = i + 1;
     rayTrace(stepSize, i);
     updateTexture();
@@ -158,5 +171,6 @@ export const rayTrace = async (
 
     i < stepSize && requestAnimationFrame(frame);
   }
+  if (thisToken !== currentToken) return;
   requestAnimationFrame(frame);
 };
