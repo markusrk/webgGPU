@@ -16,6 +16,10 @@ document.getElementById("windowSize")!.addEventListener("input", (e) => {
   const v = (e.target as HTMLInputElement).value;
   updateImage(polygonInJS,{...defaultWindowOptions, windowSize: parseInt(v)});
 });
+document.getElementById("windowHeight")!.addEventListener("input", (e) => {
+  const v = (e.target as HTMLInputElement).value;
+  updateImage(polygonInJS,{...defaultWindowOptions, windowHeight: parseInt(v)});
+});
 
 const updateImage = (polygonInJS, windowOptions) => {
   const windowsInJS = generateWindowsAlongWall(polygonInJS, windowOptions);
