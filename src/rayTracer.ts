@@ -143,7 +143,7 @@ export const rayTrace = async (
           (I.y * ti.i32(stepSize) + ti.i32(time) + (I.x * HORISONTAL_RESOLUTION) / stepSize / 1.5) %
             HORISONTAL_RESOLUTION,
         ];
-        const ray = getRayForAngle(VERTICAL_RESOLUTION, HORISONTAL_RESOLUTION, I2[0], I2[1]);
+        const ray = getRayForAngle(VERTICAL_STEP, HORISONTAL_STEP , I2[0], I2[1]);
         const scoreForAngle = getVscScoreAtAngle(ray, VERTICAL_STEP, HORISONTAL_STEP);
         for (let i of ti.range(windowCount)) {
           // @ts-ignore
