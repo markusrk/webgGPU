@@ -2,9 +2,18 @@
   <script type="module" src="src/main.ts"></script>
 </head>
 <body>
-    <div id="dragElement" style="position: absolute; top: 600px; left: 100px; width: 10px; height: 10px; background-color: blue; border-radius: 50%; cursor: move;"></div>
-    <input id="windowSize" type="number" min="0" max="500" step="10" style="position: absolute; top: 0; right: 0; margin: 10px;" value="50" />
+    <div style="display: flex;">
+        <canvas id="result_canvas" style="flex: 1;"></canvas>
+        <div style="flex: 1;">
+            <div id="dragElement" style="position: absolute; top: 600px; left: 100px; width: 10px; height: 10px; background-color: blue; border-radius: 50%; cursor: move;"></div>
+            window size: <input id="windowSize" type="number" min="0" max="500" step="10" style=" margin: 10px;" value="50" />
+            window height: <input id="windowHeight" type="number" min="0" max="500" step="10" style="margin: 10px;" value="50" />
+            <br>
+            Pull the blue point to move change the shape
+        </div>
+    </div>
 
+</div>
     <script>
         const dragElement = document.getElementById("dragElement");
         let offsetX, offsetY;
