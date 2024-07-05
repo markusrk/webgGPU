@@ -11,13 +11,12 @@ export function isPointInsidePolygon(point: ti.Vector, polygon: ti.field<ti.Vect
     let y1 = polygon[i][1];
     let x2 = polygon[i + 1][0];
     let y2 = polygon[i + 1][1];
-    if (y1 > y2) {
-      y1 = y2;
-      y2 = polygon[i][0];
-    }
 
-    if (y1 <= y && y < y2 && (x - x1) * (y2 - y1) < (x2 - x1) * (y - y1)) {
-      crossings += 1;
+    if (y1 <= y && y < y2 && (x - x1) * (y2 - y1) < (x2 - x1) * (y - y1)){
+    crossings += 1;
+    }
+    if (y1 >y && y >= y2 && (x - x1) * (y2 - y1) > (x2 - x1) * (y - y1)){
+    crossings += 1;
     }
   }
   return crossings % 2 === 1;
