@@ -1,5 +1,5 @@
 import * as ti from "taichi.js";
-
+import { rayIntersectsTriangle } from "../intersect";
 
 const N = 1000;
 
@@ -17,29 +17,34 @@ export const initialize = async () => {
 
   let triangleInJs = [
     [N * 0.1, N * 0.1, 0],
+    [N * 0.4, N * 0.1, 0],
     [N * 0.1, N * 0.4, 0],
-    [N * 0.9, N * 0.9, 0],
   ] as [number, number, number][];
 
   const triangle = ti.Vector.field(3, ti.f32, [3]) as ti.field;
   triangle.fromArray(triangleInJs);
   const pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.field;
 
-  const m = 1000000;
-  const vertices = ti.Vector.field(3, ti.f32, [m]) as ti.field;
-  const indices = ti.Vector.field(3, ti.i32, [m]) as ti.field;
+  const M = triangleInJs.length / 3;
+  const vertices = ti.Vector.field(3, ti.f32, [M]) as ti.field;
+  const indices = ti.Vector.field(3, ti.i32, [M]) as ti.field;
+
+  let testValue = ti.Vector.field(3,ti.f32, [4]) as ti.field;
 
   ti.addToKernelScope({
     vertices,
     indices,
-    m,
+    M,
     N,
-    pixels
+    pixels,
+    rayIntersectsTriangle,
+    testValue,
+    triangle
   });
 
   const initVertices = ti.kernel(() => {
     const scale = 100;
-    for (let i of ti.range(m / 3)) {
+    for (let i of ti.range(M)) {
       const step = i * 3;
       vertices[step] = [ti.random() * scale, ti.random() * scale, ti.random() * scale];
       vertices[step + 1] = vertices[step] + [1, 1, 0];
@@ -47,17 +52,28 @@ export const initialize = async () => {
       indices[step] = [step, step + 1, step + 2];
     }
   });
-  initVertices();
+  await initVertices();
 
   const calculatePixels = ti.kernel(() => {
     for (let I of ti.ndrange(N, N)) {
-
-      pixels[I] = [255, 0, 0];
+      for (let m of ti.range(M)) {
+        const step = m * 3;
+        const v1 = triangle[step];
+        const v2 = triangle[step + 1];
+        const v3 = triangle[step + 2];
+        testValue[0] = [step,step+1,step+2]
+        testValue[1] = v1
+        testValue[2] = v2
+        testValue[3] = v3
+        const isInside = rayIntersectsTriangle([I[0], I[1], 100], [0, 0, -1], v1, v2, v3);
+          pixels[I] = [255*isInside, 0, 0];
+      }
     }
-  })
-  calculatePixels()
+  });
+  await calculatePixels();
   canvas.setImage(pixels);
 
+  testValue.toArray().then(console.log);
 
   return;
 };
