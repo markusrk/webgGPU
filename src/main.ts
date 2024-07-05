@@ -3,7 +3,7 @@ import { init, preComputeSurroundings, rayTrace } from "./rayTracer";
 import { generateWindowsAlongWall } from "./geometryTools";
 
 const resolution = 1000;
-const defaultWindowOptions = { windowSize: 50, windowSpacing: 200, windowHeight: 100 };
+let defaultWindowOptions = { windowSize: 50, windowSpacing: 200, windowHeight: 100 };
 let polygonInJS = [
   [resolution * 0.1, resolution * 0.1],
   [resolution * 0.1, resolution * 0.4],
@@ -14,11 +14,13 @@ let polygonInJS = [
 
 document.getElementById("windowSize")!.addEventListener("input", (e) => {
   const v = (e.target as HTMLInputElement).value;
-  updateImage(polygonInJS,{...defaultWindowOptions, windowSize: parseInt(v)});
+  defaultWindowOptions = {...defaultWindowOptions, windowSize: parseInt(v)}
+  updateImage(polygonInJS,defaultWindowOptions);
 });
 document.getElementById("windowHeight")!.addEventListener("input", (e) => {
   const v = (e.target as HTMLInputElement).value;
-  updateImage(polygonInJS,{...defaultWindowOptions, windowHeight: parseInt(v)});
+  defaultWindowOptions = {...defaultWindowOptions, windowHeight: parseInt(v)}
+  updateImage(polygonInJS,defaultWindowOptions);
 });
 
 const updateImage = (polygonInJS, windowOptions) => {
