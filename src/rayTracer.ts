@@ -7,8 +7,8 @@ import { computeRayDirection, getRayForAngle, getVscScoreAtAngle } from "./rayGe
 
 const VERTICAL_RESOLUTION = 64;
 const HORISONTAL_RESOLUTION = 256;
-const VERTICAL_STEP = Math.PI / VERTICAL_RESOLUTION;
-const HORISONTAL_STEP = Math.PI / HORISONTAL_RESOLUTION;
+const VERTICAL_STEP = Math.PI/2 / VERTICAL_RESOLUTION;
+const HORISONTAL_STEP = Math.PI*2 / HORISONTAL_RESOLUTION;
 
 let currentToken = Symbol(); // Step 1: Initialize a unique symbol as the cancellation token
 const N = 1000;
