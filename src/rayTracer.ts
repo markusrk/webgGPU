@@ -188,3 +188,20 @@ export const rayTrace = async (
   if (thisToken !== currentToken) return;
   requestAnimationFrame(frame);
 };
+
+// delete later. Test code to calculate max daylight score
+const getVscScoreAtAngleJS = (angle, verticalStep, horizontalStep) => {
+  const vscAtAngle = 1.0 + 2.0 * Math.sin(angle);
+  const deltaOmega = Math.cos(angle) * verticalStep * horizontalStep; // the area of the rectangle this ray covers on the unit sphere
+  return vscAtAngle * deltaOmega;
+};
+
+let daylightScore = 0;
+for (let i = 0; i < VERTICAL_RESOLUTION; i++) {
+  for (let j = 0; j < HORISONTAL_RESOLUTION; j++) {
+    const angle = i * VERTICAL_STEP;
+    const score = getVscScoreAtAngleJS(angle, VERTICAL_STEP, HORISONTAL_STEP);
+    daylightScore += score;
+  }
+}
+console.log("daylightScore = ", daylightScore);
