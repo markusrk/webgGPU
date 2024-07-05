@@ -5,5 +5,11 @@ export default defineConfig({
     minify: false,
     // watch: {},
     commonjsOptions: { include: [] },
+    rollupOptions: {
+      input: {
+        main: 'src/index.html',
+        test: 'src/test.html'
+      }
+    }
   },
 });
