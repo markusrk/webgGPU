@@ -55,6 +55,37 @@ export const init = async (input_canvas) => {
   isInitialized = true;
 };
 
+export const preComputeSurroundings = async () => {
+  if (!isInitialized) {
+    console.log("Triggered preComputeSurroundings before initialization was done!!!");
+  }
+  const m = 1000000
+  const vertices = ti.Vector.field(3,ti.f32, [m]) as ti.field;
+  const indices = ti.Vector.field(3,ti.i32, [m]) as ti.field;
+  // const precomputedRayIntersections = ti.field(ti.i32, [N,N,VERTICAL_RESOLUTION*HORISONTAL_RESOLUTION/32 ]) as ti.field;
+
+  ti.addToKernelScope({
+    vertices,
+    indices,
+    m
+  })
+
+  const initVertices = ti.kernel(() => {
+    const scale = 100
+    for (let i of ti.range(m/3)) {
+      const step = i*3;
+      vertices[step] = [ti.random()*scale, ti.random()*scale, ti.random()*scale];
+      vertices[step+1] = vertices[step] +  [1.,1.,0.];
+      vertices[step+2] = vertices[step] +  [0.,0.,1.];
+      indices[step] = [step,step+1,step+2];
+    }
+  });
+  initVertices();
+
+
+  return initVertices()
+}
+
 export const rayTrace = async (
   polygonInJS: [number, number][],
   windowsInJS: [[number, number, number], [number, number, number]][]

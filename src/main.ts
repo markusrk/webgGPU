@@ -1,5 +1,5 @@
 import * as ti from "taichi.js";
-import { init, rayTrace } from "./rayTracer";
+import { init, preComputeSurroundings, rayTrace } from "./rayTracer";
 import { generateWindowsAlongWall } from "./geometryTools";
 
 const resolution = 1000;
@@ -55,6 +55,9 @@ const worker = new Worker(new URL("./worker.ts", import.meta.url), {
 const main = async () => {
   await init(htmlCanvas);
   const windowsInJS = generateWindowsAlongWall(polygonInJS, defaultWindowOptions);
+  console.log("starting precomute")
+  await preComputeSurroundings()
+  console.log("precomute done")
   rayTrace(polygonInJS, windowsInJS);
   //   const offscreen = htmlCanvas.transferControlToOffscreen()
   //   worker.postMessage({type: "init", canvas: offscreen}, [offscreen]);
