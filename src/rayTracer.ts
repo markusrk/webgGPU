@@ -1,8 +1,7 @@
 import * as ti from "taichi.js";
-import { range } from "taichi.js/dist/taichi";
-import { generateWindowsAlongWall } from "./geometryTools";
-import { isPointInsidePolygon } from "./pointInPolygon";
+import { getColorForScore } from "./colors";
 import { rayIntersectsRectangle } from "./intersect";
+import { isPointInsidePolygon } from "./pointInPolygon";
 import { computeRayDirection, getRayForAngle, getVscScoreAtAngle } from "./rayGeneration";
 
 const VERTICAL_RESOLUTION = 64;
@@ -23,6 +22,15 @@ let isInitialized = false;
 
 let htmlCanvas;
 let canvas;
+
+const colorPalletJS = [
+  [1, 0, 0, 0],
+  [0, 0.2, 1, 0.1],
+  [0, 0.6, 1, 0.3],
+  [0, 1, 0.1, 1],
+];
+const colorPalletLength = colorPalletJS.length;
+const colorPallet = ti.Vector.field(4, ti.f32, colorPalletLength) as ti.Field;
 
 export const init = async (input_canvas) => {
   htmlCanvas = input_canvas;
@@ -45,6 +53,9 @@ export const init = async (input_canvas) => {
     VERTICAL_STEP,
     HORISONTAL_STEP,
     MAX_DAYLIGHT,
+    colorPallet,
+    colorPalletLength,
+    getColorForScore,
   });
 
   const initilizeGrid = ti.kernel(() => {
@@ -54,6 +65,7 @@ export const init = async (input_canvas) => {
   });
   initilizeGrid();
 
+  colorPallet.fromArray(colorPalletJS);
   isInitialized = true;
 };
 
@@ -124,13 +136,12 @@ export const rayTrace = async (
   });
 
   const updateTexture = ti.kernel(() => {
-    const adjustmentFactor = 3 / ti.sqrt(windowCount);
     for (let I of ti.ndrange(N, N)) {
       if (scoresMask[I] > 0) {
-        const color = adjustmentFactor * scores[I];
-        pixels[I] = [color, color, color];
+        let color = getColorForScore(scores[I], colorPallet, colorPalletLength);
+        pixels[I] = color;
       } else {
-        pixels[I] = [256, 0, 0];
+        pixels[I] = [0, 0, 0];
       }
     }
   });
