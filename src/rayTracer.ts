@@ -11,13 +11,8 @@ const HORISONTAL_STEP = (Math.PI * 2) / HORISONTAL_RESOLUTION;
 const MAX_DAYLIGHT = 12.641899784120097;
 
 let currentToken = Symbol(); // Step 1: Initialize a unique symbol as the cancellation token
-const N = 1000;
 
-const points = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
-const scoresMask = ti.field(ti.f32, [N, N]) as ti.Field;
-const scores = ti.field(ti.f32, [N, N]) as ti.Field;
-const pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
-
+let N, points, scoresMask, scores, pixels;
 let isInitialized = false;
 
 let htmlCanvas;
@@ -32,10 +27,16 @@ const colorPalletJS = [
 const colorPalletLength = colorPalletJS.length;
 const colorPallet = ti.Vector.field(4, ti.f32, colorPalletLength) as ti.Field;
 
-export const init = async (input_canvas) => {
+export const init = async (input_canvas, resolution) => {
   htmlCanvas = input_canvas;
   await ti.init();
   canvas = new ti.Canvas(htmlCanvas);
+  N = resolution;
+
+  points = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
+  scoresMask = ti.field(ti.f32, [N, N]) as ti.Field;
+  scores = ti.field(ti.f32, [N, N]) as ti.Field;
+  pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
 
   ti.addToKernelScope({
     points,
