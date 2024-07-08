@@ -347,7 +347,7 @@ htmlCanvas.width = resolution;
 htmlCanvas.height = resolution;
 new Worker(new URL(
   /* @vite-ignore */
-  "/dist/assets/worker-BL0uLzfQ.js",
+  "/webgGPU/dist/assets/worker-BL0uLzfQ.js",
   import.meta.url
 ), {
   type: "module"
