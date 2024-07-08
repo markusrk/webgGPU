@@ -1,15 +1,19 @@
 import { defineConfig } from "vite";
+import taichi from "rollup-plugin-taichi";
 
 export default defineConfig({
   build: {
     minify: false,
-    // watch: {},
+    watch: {},
     commonjsOptions: { include: [] },
     rollupOptions: {
       input: {
-        main: 'src/index.html',
-        test: 'src/test.html'
-      }
+        main: 'index.html',
+        test: 'test.html'
+      },
+      plugins: [
+        taichi(),
+      ]
     }
   },
 });
