@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import taichi from "rollup-plugin-taichi";
 
 export default defineConfig({
+  base: "/dist/",
   build: {
     minify: false,
     watch: {},
