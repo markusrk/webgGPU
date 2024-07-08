@@ -1,6 +1,6 @@
 import * as ti from "taichi.js";
 
-export function isPointInsidePolygon(point: ti.Vector, polygon: ti.field<ti.Vector>, polygonLength: number): boolean {
+export const isPointInsidePolygon= ti.func((point: ti.Vector, polygon: ti.field<ti.Vector>, polygonLength: number): boolean=> {
   const x = point[0];
   const y = point[1];
   const numVertices = polygonLength - 1;
@@ -20,7 +20,7 @@ export function isPointInsidePolygon(point: ti.Vector, polygon: ti.field<ti.Vect
     }
   }
   return crossings % 2 === 1;
-}
+})
 
 export function isPointInsidePolygonJS(point: [number, number], polygon: [number, number][]): boolean {
   const x = point[0];
