@@ -35,3 +35,19 @@ const main = async () => {
 };
 main();
 ```
+
+## Major tasks
+* Add support for surrounding buildings
+  * Import and cull triangles
+  * Create BVH logic
+  * More performant intersection logic 
+  * Test if precompute of surroundings are reasonable
+* Bounce rays
+  * Do research on material properties
+  * Refraction/Reflection code
+  * Performance testing 
+* Validating results - nothing done here yet. This is just a proof of concept
+
+
+## Minor tasks
+* Change input interface to use triangle for wall instead of rectangles for windows. 
