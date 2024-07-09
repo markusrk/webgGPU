@@ -2,11 +2,13 @@
   "name": "webgpu",
   "version": "1.0.0",
   "description": "Experiment with doing daylight calculations on webgpu",
-  "main": "src/index.js",
+  "main": "dist/daylightTracer.,mjs",
   "scripts": {
     "dev": "vite",
-    "preview": "vite preview",
+    "dev:docs": "vite --config vite.config-docs.ts",
+    "preview": "vite preview -c vite.config-docs.ts",
     "build": "vite build",
+    "build:docs": "vite build --config vite.config-docs.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -19,4 +21,4 @@
   "prettier": {
     "printWidth": 120
   }
-}
+  }

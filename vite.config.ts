@@ -5,17 +5,17 @@ export default defineConfig({
   base: "/webgGPU/dist/",
   build: {
     lib: {
-      entry: "src.rayTracer.ts",
-      name: "daylightTracer",
-      fileName: "daylightTracer",
+      entry: "src/rayTracer.ts",
+      name: "daylight",
+      fileName: "tracer",
     },
     minify: false,
     watch: {},
-    commonjsOptions: { include: [] },
     rollupOptions: {
       input: {
-        main: 'index.html',
-        test: 'test.html'
+        lib: 'src/rayTracer.ts',
+        // main: 'index.html',
+        // test: 'test.html',
       },
       plugins: [
         taichi(),
