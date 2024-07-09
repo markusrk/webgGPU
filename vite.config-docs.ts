@@ -4,7 +4,7 @@ import taichi from "rollup-plugin-taichi";
 // Function to conditionally apply aliases based on the build mode
 function customAlias(mode: string) {
   if (mode === 'production') {
-    return [{ find: "./rayTracer", replacement: "https://markusrk.github.io/webgGPU/dist/tracer.mjs" }];
+    return [{ find: "../rayTracer", replacement: "https://markusrk.github.io/webgGPU/dist/tracer.mjs" }];
   }
   return [];
 }
