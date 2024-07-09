@@ -1,6 +1,6 @@
 import * as ti from "taichi.js";
-import { generateWindowsAlongWall } from "./geometryTools";
-import { init, rayTrace } from "./rayTracer";
+import { generateWindowsAlongWall } from "../geometryTools";
+import { init, rayTrace } from "../rayTracer";
 
 const resolution = 1000;
 let defaultWindowOptions = { windowSize: 50, windowSpacing: 200, windowHeight: 100 };

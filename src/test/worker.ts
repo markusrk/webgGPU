@@ -1,5 +1,5 @@
-import { generateWindowsAlongWall } from "./geometryTools";
-import { init, rayTrace } from "./rayTracer";
+import { generateWindowsAlongWall } from "../geometryTools";
+import { init, rayTrace } from "../rayTracer";
 
 let canvas = null;
 let ctxWorker = null;
