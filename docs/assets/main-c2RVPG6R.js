@@ -1,4 +1,4 @@
-import { rayTrace, init } from "https://markusrk.github.io/webgGPU/dist/tracer.mjs";
+import { rayTrace, init } from "https://markusrk.github.io/webgGPU/dist/v1/tracer.mjs";
 (function polyfill() {
   const relList = document.createElement("link").relList;
   if (relList && relList.supports && relList.supports("modulepreload")) {

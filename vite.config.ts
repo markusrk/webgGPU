@@ -4,6 +4,7 @@ import taichi from "rollup-plugin-taichi";
 export default defineConfig({
   base: "/webgGPU/dist/",
   build: {
+    outDir: "dist/v1",
     lib: {
       entry: "src/rayTracer.ts",
       name: "daylight",
@@ -13,13 +14,11 @@ export default defineConfig({
     watch: {},
     rollupOptions: {
       input: {
-        lib: 'src/rayTracer.ts',
+        lib: "src/rayTracer.ts",
         // main: 'index.html',
         // test: 'test.html',
       },
-      plugins: [
-        taichi(),
-      ]
-    }
+      plugins: [taichi()],
+    },
   },
 });
