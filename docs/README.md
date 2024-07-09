@@ -1,0 +1,34 @@
+Simple daylight raytracer library.
+To use it import `https://markusrk.github.io/webgGPU/dist/tracer.mjs`
+
+Example:
+
+```JS
+import { rayTrace, init } from "https://markusrk.github.io/webgGPU/dist/tracer.mjs";
+
+// Grid resolution of result. for now it is forced to be a square. More than 1000 tends to give performance issues. 
+const resolution = 1e3;
+
+// Format: [[x,y,z],[x,y,z]] first array is bottom-left corner of window, second array is top-right corner.
+const windowsInJS = [[]];
+
+// Closed polygon of the area you want analysis for. 
+const closedPolygon = [
+    [resolution * 0.1, resolution * 0.1],
+    [resolution * 0.1, resolution * 0.9],
+    [resolution * 0.9, resolution * 0.9],
+    [resolution * 0.9, resolution * 0.1],
+    [resolution * 0.1, resolution * 0.1]
+  ]
+
+// The library draws directly to the canvas. I suggest using two canvas'es in your app. This one on the botton and your own canvas with all your drawing logic on the top. Just set transparency wherever you want the analysis results to show. 
+const htmlCanvas = document.getElementById("result_canvas");
+htmlCanvas.width = resolution;
+htmlCanvas.height = resolution;
+
+const main = async () => {
+  await init(htmlCanvas, resolution);
+  rayTrace(closedPolygon, windowsInJS);
+};
+main();
+```
