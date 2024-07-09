@@ -1,6 +1,6 @@
 import * as ti from "taichi.js";
-import { init, preComputeSurroundings, rayTrace } from "./rayTracer";
 import { generateWindowsAlongWall } from "./geometryTools";
+import { init, rayTrace } from "./rayTracer";
 
 const resolution = 1000;
 let defaultWindowOptions = { windowSize: 50, windowSpacing: 200, windowHeight: 100 };
@@ -23,12 +23,6 @@ document.getElementById("windowHeight")!.addEventListener("input", (e) => {
   updateImage(polygonInJS,defaultWindowOptions);
 });
 
-const updateImage = (polygonInJS, windowOptions) => {
-  const windowsInJS = generateWindowsAlongWall(polygonInJS, windowOptions);
-  rayTrace(polygonInJS, windowsInJS);
-  // worker.postMessage({type: "update", polygon: polygonInJS});
-};
-
 const updateCoordinate = (x, y) => {
   polygonInJS = [
     [resolution * 0.1, resolution * 0.1],
@@ -40,30 +34,24 @@ const updateCoordinate = (x, y) => {
   updateImage(polygonInJS, defaultWindowOptions);
 }
 
+const updateImage = (polygonInJS, windowOptions) => {
+  const windowsInJS = generateWindowsAlongWall(polygonInJS, windowOptions);
+  rayTrace(polygonInJS, windowsInJS);
+  // worker.postMessage({type: "update", polygon: polygonInJS});
+};
+
 // @ts-ignore
 window.updateCoordinate = updateCoordinate;
 
 
-
+// This is bottom part is the code that matters. The rest is scaffolding. 
 const htmlCanvas = document.getElementById("result_canvas")! as ti.Canvas;
 htmlCanvas.width = resolution;
 htmlCanvas.height = resolution;
 
-
-const worker = new Worker(new URL("./worker.ts", import.meta.url), {
-  type: "module",
-});
-
 const main = async () => {
   await init(htmlCanvas, resolution);
   const windowsInJS = generateWindowsAlongWall(polygonInJS, defaultWindowOptions);
-  console.log("starting precomute")
-  await preComputeSurroundings()
-  console.log("precomute done")
   rayTrace(polygonInJS, windowsInJS);
-  //   const offscreen = htmlCanvas.transferControlToOffscreen()
-  //   worker.postMessage({type: "init", canvas: offscreen}, [offscreen]);
-  //   await new Promise(resolve => setTimeout(resolve, 2000));
-  //   worker.postMessage({type: "update", polygon: polygonInJS});
 };
 main();
