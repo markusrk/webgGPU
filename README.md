@@ -6,10 +6,10 @@ Example:
 ```JS
 import { rayTrace, init } from "https://markusrk.github.io/webgGPU/dist/v1/tracer.mjs";
 
-// Grid resolution of result. for now it is forced to be a square. More than 1000 tends to give performance issues.
+// Grid resolution of result. For now it is forced to be a square of (resolution x resolution). More than 1000px tends to give performance issues.
 const resolution = 1e3;
 
-// Format: [[x,y,z],[x,y,z]] first array is bottom-left corner of window, second array is top-right corner.
+// Format: [[x,y,z],[x,y,z]] first array is bottom-left corner of window, second array is top-right corner. "winding order" matters. Only the right hand side lets light through currently. 
 const windowsInJS = [
     [resolution * 0.1, resolution * 0.1, 0],
     [resolution * 0.1, resolution * 0.2, 50],
