@@ -55,7 +55,7 @@ const worker = new Worker(new URL("./worker.ts", import.meta.url), {
 });
 
 const main = async () => {
-  await init(htmlCanvas);
+  await init(htmlCanvas, resolution);
   const windowsInJS = generateWindowsAlongWall(polygonInJS, defaultWindowOptions);
   console.log("starting precomute")
   await preComputeSurroundings()
