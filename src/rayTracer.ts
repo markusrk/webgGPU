@@ -3,6 +3,8 @@ import { getColorForScore } from "./colors";
 import { rayIntersectsRectangle } from "./intersect";
 import { isPointInsidePolygon } from "./pointInPolygon";
 import { computeRayDirection, getRayForAngle, getVscScoreAtAngle } from "./rayGeneration";
+import { generateRay, generateRayFromNormal } from "./randomRays";
+import { getSpecificVCSScoreAtRay } from "./sky";
 
 const VERTICAL_RESOLUTION = 64;
 const HORISONTAL_RESOLUTION = 256;
@@ -57,6 +59,9 @@ export const init = async (input_canvas, resolution) => {
     colorPallet,
     colorPalletLength,
     getColorForScore,
+    generateRayFromNormal,
+    generateRay,
+    getSpecificVCSScoreAtRay
   });
 
   const initilizeGrid = ti.kernel(() => {
@@ -150,14 +155,9 @@ export const rayTrace = async (
   const rayTrace = ti.kernel((stepSize: ti.i32, time: ti.i32) => {
     const computeScoreForPoint = (position: ti.Vector) => {
       let score = ti.f32(0);
-      for (let I of ti.ndrange(VERTICAL_RESOLUTION, HORISONTAL_RESOLUTION / stepSize)) {
-        const I2 = [
-          I.x,
-          (I.y * ti.i32(stepSize) + ti.i32(time) + (I.x * HORISONTAL_RESOLUTION) / stepSize / 1.5) %
-            HORISONTAL_RESOLUTION,
-        ];
-        const ray = getRayForAngle(VERTICAL_STEP, HORISONTAL_STEP, I2[0], I2[1]);
-        const scoreForAngle = getVscScoreAtAngle(ray, VERTICAL_STEP, HORISONTAL_STEP);
+      for (let I of ti.ndrange(64, 2 )) {
+        const ray = generateRayFromNormal([0.0,0.0,1.0])
+        const scoreForAngle = getSpecificVCSScoreAtRay(ray);
         for (let i of ti.range(windowCount)) {
           // @ts-ignore
           const recStart = windows[(i, 0)];
@@ -176,7 +176,7 @@ export const rayTrace = async (
       for (let i of ti.range(1)) {
         if (scoresMask[I] > 0) {
           scores[I] =
-            (scores[I] * (time - 1)) / ti.max(time, 1) + (computeScoreForPoint(points[I]) * stepSize) / ti.max(time, 1);
+            (scores[I] * (time - 1)) / ti.max(time, 1) + (computeScoreForPoint(points[I]) /stepSize*32) / ti.max(time, 1);
         }
       }
     }
@@ -185,7 +185,7 @@ export const rayTrace = async (
   updateScoresMask();
   if (thisToken !== currentToken) return;
   let i = 0;
-  const stepSize = 32;
+  const stepSize = 320;
   async function frame() {
     if (thisToken !== currentToken) return;
     i = i + 1;
