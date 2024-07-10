@@ -32,6 +32,7 @@ export const inwardsBoxFromAABB = (p1: Point, p2: Point): Triangle[] => {
   return [...front, ...right, ...back, ...left, ...top];
 };
 
+// This code is not tested. Please don't use. 
 export const boxFromAABB = (p1: Point, p2: Point): Triangle[] => {
   const x = [p2[0] - p1[0], 0, 0] as Point;
   const y = [0, p2[1] - p1[1], 0] as Point;
