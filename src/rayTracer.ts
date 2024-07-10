@@ -2,14 +2,9 @@ import * as ti from "taichi.js";
 import { getColorForScore } from "./colors";
 import { rayIntersectsRectangle } from "./intersect";
 import { isPointInsidePolygon } from "./pointInPolygon";
-import { computeRayDirection, getRayForAngle, getVscScoreAtAngle } from "./rayGeneration";
 import { generateRay, generateRayFromNormal } from "./randomRays";
 import { getSpecificVCSScoreAtRay } from "./sky";
 
-const VERTICAL_RESOLUTION = 64;
-const HORISONTAL_RESOLUTION = 256;
-const VERTICAL_STEP = Math.PI / 2 / VERTICAL_RESOLUTION;
-const HORISONTAL_STEP = (Math.PI * 2) / HORISONTAL_RESOLUTION;
 const MAX_DAYLIGHT = 12.641899784120097;
 
 let currentToken = Symbol(); // Step 1: Initialize a unique symbol as the cancellation token
@@ -48,20 +43,13 @@ export const init = async (input_canvas, resolution) => {
     scoresMask,
     isPointInsidePolygon,
     rayIntersectsRectangle,
-    getRayForAngle,
-    computeRayDirection,
-    getVscScoreAtAngle,
-    VERTICAL_RESOLUTION,
-    HORISONTAL_RESOLUTION,
-    VERTICAL_STEP,
-    HORISONTAL_STEP,
     MAX_DAYLIGHT,
     colorPallet,
     colorPalletLength,
     getColorForScore,
     generateRayFromNormal,
     generateRay,
-    getSpecificVCSScoreAtRay
+    getSpecificVCSScoreAtRay,
   });
 
   const initilizeGrid = ti.kernel(() => {
@@ -155,8 +143,8 @@ export const rayTrace = async (
   const rayTrace = ti.kernel((stepSize: ti.i32, time: ti.i32) => {
     const computeScoreForPoint = (position: ti.Vector) => {
       let score = ti.f32(0);
-      for (let I of ti.ndrange(64, 2 )) {
-        const ray = generateRayFromNormal([0.0,0.0,1.0])
+      for (let I of ti.ndrange(64, 2)) {
+        const ray = generateRayFromNormal([0.0, 0.0, 1.0]);
         const scoreForAngle = getSpecificVCSScoreAtRay(ray);
         for (let i of ti.range(windowCount)) {
           // @ts-ignore
@@ -173,11 +161,10 @@ export const rayTrace = async (
     };
 
     for (let I of ti.ndrange(N, N)) {
-      for (let i of ti.range(1)) {
-        if (scoresMask[I] > 0) {
-          scores[I] =
-            (scores[I] * (time - 1)) / ti.max(time, 1) + (computeScoreForPoint(points[I]) /stepSize*32) / ti.max(time, 1);
-        }
+      if (scoresMask[I] > 0) {
+        scores[I] =
+          (scores[I] * (time - 1)) / ti.max(time, 1) +
+          ((computeScoreForPoint(points[I]) / stepSize) * 32) / ti.max(time, 1);
       }
     }
   });
@@ -200,20 +187,3 @@ export const rayTrace = async (
   if (thisToken !== currentToken) return;
   requestAnimationFrame(frame);
 };
-
-// delete later. Test code to calculate max daylight score
-const getVscScoreAtAngleJS = (angle, verticalStep, horizontalStep) => {
-  const vscAtAngle = 1.0 + 2.0 * Math.sin(angle);
-  const deltaOmega = Math.cos(angle) * verticalStep * horizontalStep; // the area of the rectangle this ray covers on the unit sphere
-  return vscAtAngle * deltaOmega;
-};
-
-let daylightScore = 0;
-for (let i = 0; i < VERTICAL_RESOLUTION; i++) {
-  for (let j = 0; j < HORISONTAL_RESOLUTION; j++) {
-    const angle = i * VERTICAL_STEP;
-    const score = getVscScoreAtAngleJS(angle, VERTICAL_STEP, HORISONTAL_STEP);
-    daylightScore += score;
-  }
-}
-console.log("daylightScore = ", daylightScore);
