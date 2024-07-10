@@ -1,6 +1,6 @@
 import * as ti from "taichi.js";
 import { getColorForScore } from "./colors";
-import { rayIntersectsRectangle } from "./intersect";
+import { rayIntersectsTriangle } from "./intersect";
 import { isPointInsidePolygon } from "./pointInPolygon";
 import { generateRay, generateRayFromNormal } from "./randomRays";
 import { getSpecificVCSScoreAtRay } from "./sky";
@@ -42,7 +42,7 @@ export const init = async (input_canvas, resolution) => {
     scores,
     scoresMask,
     isPointInsidePolygon,
-    rayIntersectsRectangle,
+    rayIntersectsTriangle,
     MAX_DAYLIGHT,
     colorPallet,
     colorPalletLength,
@@ -54,7 +54,7 @@ export const init = async (input_canvas, resolution) => {
 
   const initilizeGrid = ti.kernel(() => {
     for (let I of ti.ndrange(N, N)) {
-      points[I] = [I[0], I[1], 0];
+      points[I] = [I[0], I[1], 1];
     }
   });
   initilizeGrid();
@@ -95,7 +95,7 @@ export const preComputeSurroundings = async () => {
 
 export const rayTrace = async (
   polygonInJS: [number, number][],
-  windowsInJS: [[number, number, number], [number, number, number]][]
+  wallsInJS: [[number, number, number], [number, number, number]][]
 ) => {
   if (!isInitialized) {
     console.log("Triggered rayTrace before initialization was done!!!");
@@ -108,17 +108,17 @@ export const rayTrace = async (
   polygon.fromArray(polygonInJS);
   if (thisToken !== currentToken) return;
 
-  const windowCount = windowsInJS.length;
-  const windows = ti.Vector.field(3, ti.f32, [windowCount, 2]);
+  const wallCount = wallsInJS.length;
+  const walls = ti.Vector.field(3, ti.f32, [wallCount, 3]);
 
   if (thisToken !== currentToken) return;
-  windows.fromArray(windowsInJS);
+  walls.fromArray(wallsInJS);
 
   if (thisToken !== currentToken) return;
 
   ti.addToKernelScope({
-    windows,
-    windowCount,
+    walls,
+    wallCount,
     polygon,
     polygonLength,
   });
@@ -146,15 +146,16 @@ export const rayTrace = async (
       for (let I of ti.ndrange(64, 2)) {
         const ray = generateRayFromNormal([0.0, 0.0, 1.0]);
         const scoreForAngle = getSpecificVCSScoreAtRay(ray);
-        for (let i of ti.range(windowCount)) {
+        let isHit = false;
+        for (let i of ti.range(wallCount)) {
           // @ts-ignore
-          const recStart = windows[(i, 0)];
+          const recStart = walls[(i, 0)];
           // @ts-ignore
-          const recEnd = windows[(i, 1)];
-          const isInside = rayIntersectsRectangle(position, ray, recStart, recEnd);
-          if (isInside) {
-            score = score + scoreForAngle;
-          }
+          const recEnd = walls[(i, 1)];
+          isHit = isHit || rayIntersectsTriangle(position, ray, walls[(i, 0)], walls[(i, 1)],walls[(i, 2)]);
+        }
+        if (!isHit) {
+          score = score + scoreForAngle;
         }
       }
       return score / MAX_DAYLIGHT;
