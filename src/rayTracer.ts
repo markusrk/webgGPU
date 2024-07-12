@@ -149,7 +149,7 @@ export const rayTrace = async (
       let bounces = 0;
       let remainingLightFactor = ti.f32(1.0);
       const maxBounces = 6;
-      const tracedRaysTarget = 50;
+      const tracedRaysTarget = 20;
       let nextPosition = position;
       // Todo:  build a smarter logic here so we are not forced to run MaxBounce*tracedRaysTarget amount of times every time. Example run 1000 rays and just divide the score by the amount of finished traces for each point.
       for (let m of ti.range(maxBounces * tracedRaysTarget)) {
@@ -164,7 +164,6 @@ export const rayTrace = async (
             nextPosition = position;
             remainingLightFactor = 1.0;
           } else {
-            bounces = bounces + 1;
             if (bounces == maxBounces) {
               nextPosition = position;
               bounces = 0;
@@ -172,7 +171,8 @@ export const rayTrace = async (
             } else {
               // assign next position adjust for reflection factor and restart.
               nextPosition = res.intersectionPoint;
-              remainingLightFactor = remainingLightFactor * 0.5;
+              remainingLightFactor = remainingLightFactor * 0.1;
+              bounces = bounces + 1;
             }
           }
         }
@@ -184,7 +184,7 @@ export const rayTrace = async (
       if (scoresMask[I] > 0) {
         scores[I] =
           (scores[I] * (time - 1)) / ti.max(time, 1) +
-          ((computeScoreForPoint(points[I]) / stepSize) * 32) / ti.max(time, 1);
+          ((computeScoreForPoint(points[I]) / stepSize) * 80) / ti.max(time, 1);
       }
     }
   });
