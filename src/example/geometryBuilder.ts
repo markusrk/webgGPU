@@ -46,7 +46,7 @@ export const inwardsBoxFromAABBWithwindow = (p1: Point, p2: Point): Triangle[] =
   const front = wallTrianglesFromPoints(add(p1, x), add(p1, z));
   const right = wallTrianglesFromPoints(sub(p2, z), sub(p2, y));
 
-  const wp1 = add(add(add(p1, y), scalarMul(x, 0.4)), scalarMul(z, 0.40));
+  const wp1 = add(add(add(p1, y), scalarMul(x, 0.4)), scalarMul(z, 0.0));
   const wp2 = add(add(add(p1, y),scalarMul(z,0.80)), scalarMul(x, 0.6));
   const back = wallWithWindowFromPoints(add(p1, y), p2, wp1, wp2);
   const left = wallTrianglesFromPoints(p1, add(add(p1, z), y));
