@@ -9,7 +9,7 @@ const MAX_DAYLIGHT = 12.641899784120097;
 
 let currentToken = Symbol(); // Step 1: Initialize a unique symbol as the cancellation token
 
-let N, points, scoresMask, scores, pixels;
+let N, points, scoresMask, scores, pixels, traceCount;
 let isInitialized = false;
 
 let htmlCanvas;
@@ -35,6 +35,7 @@ export const init = async (input_canvas, resolution) => {
   scoresMask = ti.field(ti.f32, [N, N]) as ti.Field;
   scores = ti.field(ti.f32, [N, N]) as ti.Field;
   pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
+  traceCount = ti.field(ti.i32, [N, N]) as ti.Field;
 
   ti.addToKernelScope({
     points,
@@ -42,6 +43,7 @@ export const init = async (input_canvas, resolution) => {
     N,
     scores,
     scoresMask,
+    traceCount,
     isPointInsidePolygon,
     rayIntersectsTriangle,
     MAX_DAYLIGHT,
@@ -98,7 +100,7 @@ export const preComputeSurroundings = async () => {
 export const rayTrace = async (
   polygonInJS: [number, number][],
   wallsInJS: [[number, number, number], [number, number, number]][],
-  options = {materialReflectivity: 0.7, maxBounces: 6}
+  options = { materialReflectivity: 0.7, maxBounces: 6 }
 ) => {
   if (!isInitialized) {
     console.log("Triggered rayTrace before initialization was done!!!");
@@ -136,7 +138,7 @@ export const rayTrace = async (
   const updateTexture = ti.kernel(() => {
     for (let I of ti.ndrange(N, N)) {
       if (scoresMask[I] > 0) {
-        let color = getColorForScore(scores[I], colorPallet, colorPalletLength);
+        let color = getColorForScore(scores[I] / traceCount[I] / 20, colorPallet, colorPalletLength);
         pixels[I] = color;
       } else {
         pixels[I] = [0, 0, 0];
@@ -144,7 +146,7 @@ export const rayTrace = async (
     }
   });
 
-  const rayTrace = ti.kernel((stepSize: ti.i32, time: ti.i32) => {
+  const rayTrace = ti.kernel((stepSize: ti.i32, reset: Bool) => {
     const computeScoreForPoint = (position: ti.Vector) => {
       let score = ti.f32(0);
       let tracedRays = 0;
@@ -154,7 +156,7 @@ export const rayTrace = async (
       const tracedRaysTarget = 20;
       let nextPosition = position;
       // Todo:  build a smarter logic here so we are not forced to run MaxBounce*tracedRaysTarget amount of times every time. Example run 1000 rays and just divide the score by the amount of finished traces for each point.
-      for (let m of ti.range(maxBounces * tracedRaysTarget)) {
+      for (let _ of ti.range(stepSize)) {
         if (tracedRaysTarget > tracedRays) {
           const ray = generateRayFromNormal([0.0, 0.0, 1.0]);
           let res = intersectRayWithGeometry(nextPosition, ray, walls, wallCount);
@@ -180,14 +182,18 @@ export const rayTrace = async (
           }
         }
       }
-      return score / MAX_DAYLIGHT;
+      return { score, tracedRays };
     };
 
     for (let I of ti.ndrange(N, N)) {
+      const res = computeScoreForPoint(points[I]);
+      if (reset){
+        scores[I] = 0;
+        traceCount[I] = 0;
+      }
       if (scoresMask[I] > 0) {
-        scores[I] =
-          (scores[I] * (time - 1)) / ti.max(time, 1) +
-          ((computeScoreForPoint(points[I]) / stepSize) * 80) / ti.max(time, 1);
+        scores[I] = scores[I] + res.score;
+        traceCount[I] = traceCount[I] + res.tracedRays;
       }
     }
   });
@@ -195,18 +201,20 @@ export const rayTrace = async (
   updateScoresMask();
   if (thisToken !== currentToken) return;
   let i = 0;
-  const stepSize = 320;
+  const steps = 320;
+  const tracesPerStep = 1000;
   async function frame() {
     if (thisToken !== currentToken) return;
     i = i + 1;
-    rayTrace(stepSize, i);
+    rayTrace(tracesPerStep, false);
     if (thisToken !== currentToken) return;
     updateTexture();
     if (thisToken !== currentToken) return;
     canvas.setImage(pixels);
 
-    i < stepSize && requestAnimationFrame(frame);
+    i < steps && requestAnimationFrame(frame);
   }
   if (thisToken !== currentToken) return;
+  rayTrace(tracesPerStep, true);
   requestAnimationFrame(frame);
 };
