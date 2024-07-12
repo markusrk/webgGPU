@@ -20,6 +20,7 @@ const colorPalletJS = [
   [0, 0.2, 1, 0.1],
   [0, 0.6, 1, 0.3],
   [0, 1, 0.1, 1],
+  [0, 1, 0.1, 1000000],
 ];
 const colorPalletLength = colorPalletJS.length;
 const colorPallet = ti.Vector.field(4, ti.f32, colorPalletLength) as ti.Field;
