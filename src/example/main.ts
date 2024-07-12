@@ -5,7 +5,7 @@ import { boxFromAABBWithHoleInTheTop, inwardsBoxFromAABBWithwindow } from "./geo
 
 const resolution = 1000;
 let defaultWindowOptions = { windowSize: 50, windowSpacing: 200, windowHeight: 100 };
-let bounceOptions = {materialReflectivity: 0.9, maxBounces: 1}
+let bounceOptions = {materialReflectivity: 0.5, maxBounces: 6}
 
 let polygonInJS = [
   [resolution * 0.1, resolution * 0.1],
