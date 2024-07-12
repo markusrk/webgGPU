@@ -143,19 +143,37 @@ export const rayTrace = async (
   const rayTrace = ti.kernel((stepSize: ti.i32, time: ti.i32) => {
     const computeScoreForPoint = (position: ti.Vector) => {
       let score = ti.f32(0);
-      for (let I of ti.ndrange(64, 2)) {
+      let tracedRays = 0;
+      const tracedRaysTarget = 1000;
+      let bounces = 0;
+      let remainingLightFactor = 1.0;
+      const maxBounces = 3;
+      let nextPosition = position;
+      for (let m of ti.range(128)) {
         const ray = generateRayFromNormal([0.0, 0.0, 1.0]);
-        const scoreForAngle = getSpecificVCSScoreAtRay(ray);
         let isHit = false;
+        // todo: rebuild this as a function and make sure to find the first intersection, not just any intersection.
         for (let i of ti.range(wallCount)) {
           // @ts-ignore
-          const recStart = walls[(i, 0)];
-          // @ts-ignore
-          const recEnd = walls[(i, 1)];
-          isHit = isHit || rayIntersectsTriangle(position, ray, walls[(i, 0)], walls[(i, 1)],walls[(i, 2)]);
+          let res = rayIntersectsTriangle(nextPosition, ray, walls[(i, 0)], walls[(i, 1)], walls[(i, 2)]);
+          isHit = isHit || res.intersects;
         }
-        if (!isHit) {
+        if (!isHit && tracedRaysTarget > tracedRays) {
+          const scoreForAngle = getSpecificVCSScoreAtRay(ray);
           score = score + scoreForAngle;
+          tracedRays = tracedRays + 1;
+          bounces = 0;
+          nextPosition = position;
+        } else {
+          bounces = bounces + 1;
+          if (bounces == maxBounces) {
+           nextPosition = position;
+           bounces = 0
+           remainingLightFactor = 1.0
+          }
+          else {
+            // assign next position and restart. (Remember to increase bounces)
+          }
         }
       }
       return score / MAX_DAYLIGHT;

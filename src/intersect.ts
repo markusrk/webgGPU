@@ -29,20 +29,21 @@ export const rayIntersectsRectangle = ti.func(
 
 export const rayIntersectsTriangle = ti.func(
   (origin: ti.Vector, ray: ti.Vector, p1: ti.Vector, p2: ti.Vector, p3: ti.Vector) => {
-    let res = false;
+    let intersects = false;
     const vec1 = p2 - p1;
     const vec2 = p3 - p2;
     const vec3 = p1 - p3;
     const normal = ti.cross(vec2, vec1);
     const dot = ti.dot(normal, ray);
+    let rayPointInPlane = [ti.f32(0.0), ti.f32(0.0), ti.f32(0.0)] as ti.Vector<ti.f32>;
     if (dot >= 0.00001) {
       const t = ti.dot(p1 - origin, normal) / ti.dot(ray, normal);
-      const rayPointInPlane = origin + ray * t;
+      rayPointInPlane = origin + ray * t;
       const cross1 = ti.cross(vec1, rayPointInPlane - p1);
       const cross2 = ti.cross(vec2, rayPointInPlane - p2);
       const cross3 = ti.cross(vec3, rayPointInPlane - p3);
-      res = ti.dot(cross1, cross2) >= 0 && ti.dot(cross2, cross3) >= 0;
+      intersects = ti.dot(cross1, cross2) >= 0 && ti.dot(cross2, cross3) >= 0;
     }
-    return res;
+    return {intersects, nextPoint: rayPointInPlane};
   }
 );
