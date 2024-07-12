@@ -172,7 +172,7 @@ export const rayTrace = async (
             } else {
               // assign next position adjust for reflection factor and restart.
               nextPosition = res.intersectionPoint;
-              remainingLightFactor = remainingLightFactor * 1.0;
+              remainingLightFactor = remainingLightFactor * 0.5;
             }
           }
         }
