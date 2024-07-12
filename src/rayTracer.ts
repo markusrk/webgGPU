@@ -97,7 +97,8 @@ export const preComputeSurroundings = async () => {
 
 export const rayTrace = async (
   polygonInJS: [number, number][],
-  wallsInJS: [[number, number, number], [number, number, number]][]
+  wallsInJS: [[number, number, number], [number, number, number]][],
+  options = {materialReflectivity: 0.7, maxBounces: 6}
 ) => {
   if (!isInitialized) {
     console.log("Triggered rayTrace before initialization was done!!!");
@@ -123,6 +124,7 @@ export const rayTrace = async (
     wallCount,
     polygon,
     polygonLength,
+    options,
   });
 
   const updateScoresMask = ti.kernel(() => {
@@ -148,7 +150,7 @@ export const rayTrace = async (
       let tracedRays = 0;
       let bounces = 0;
       let remainingLightFactor = ti.f32(1.0);
-      const maxBounces = 6;
+      const maxBounces = options.maxBounces;
       const tracedRaysTarget = 20;
       let nextPosition = position;
       // Todo:  build a smarter logic here so we are not forced to run MaxBounce*tracedRaysTarget amount of times every time. Example run 1000 rays and just divide the score by the amount of finished traces for each point.
@@ -172,7 +174,7 @@ export const rayTrace = async (
             } else {
               // assign next position adjust for reflection factor and restart.
               nextPosition = res.intersectionPoint;
-              remainingLightFactor = remainingLightFactor * 0.1;
+              remainingLightFactor = remainingLightFactor * options.materialReflectivity;
               bounces = bounces + 1;
             }
           }
