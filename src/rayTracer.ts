@@ -145,31 +145,34 @@ export const rayTrace = async (
     const computeScoreForPoint = (position: ti.Vector) => {
       let score = ti.f32(0);
       let tracedRays = 0;
-      const tracedRaysTarget = 1000;
       let bounces = 0;
-      let remainingLightFactor = 1.0;
-      const maxBounces = 3;
+      let remainingLightFactor = ti.f32(1.0);
+      const maxBounces = 6;
+      const tracedRaysTarget = 50;
       let nextPosition = position;
-      for (let m of ti.range(128)) {
-        const ray = generateRayFromNormal([0.0, 0.0, 1.0]);
-        let isHit = false;
-        let res = intersectRayWithGeometry(nextPosition, ray, walls, wallCount);
-        isHit = res.isHit;
-        if (!isHit && tracedRaysTarget > tracedRays) {
-          const scoreForAngle = getSpecificVCSScoreAtRay(ray);
-          score = score + scoreForAngle;
-          tracedRays = tracedRays + 1;
-          bounces = 0;
-          nextPosition = position;
-        } else {
-          bounces = bounces + 1;
-          if (bounces == maxBounces) {
-           nextPosition = position;
-           bounces = 0
-           remainingLightFactor = 1.0
-          }
-          else {
-            // assign next position and restart. (Remember to increase bounces)
+      // Todo:  build a smarter logic here so we are not forced to run MaxBounce*tracedRaysTarget amount of times every time. Example run 1000 rays and just divide the score by the amount of finished traces for each point.
+      for (let m of ti.range(maxBounces * tracedRaysTarget)) {
+        if (tracedRaysTarget > tracedRays) {
+          const ray = generateRayFromNormal([0.0, 0.0, 1.0]);
+          let res = intersectRayWithGeometry(nextPosition, ray, walls, wallCount);
+          if (!res.isHit) {
+            const scoreForAngle = getSpecificVCSScoreAtRay(ray);
+            score = score + scoreForAngle * remainingLightFactor;
+            tracedRays = tracedRays + 1;
+            bounces = 0;
+            nextPosition = position;
+            remainingLightFactor = 1.0;
+          } else {
+            bounces = bounces + 1;
+            if (bounces == maxBounces) {
+              nextPosition = position;
+              bounces = 0;
+              remainingLightFactor = 1.0;
+            } else {
+              // assign next position adjust for reflection factor and restart.
+              nextPosition = res.intersectionPoint;
+              remainingLightFactor = remainingLightFactor * 1.0;
+            }
           }
         }
       }
