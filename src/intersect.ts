@@ -56,7 +56,7 @@ export const intersectRayWithGeometry = ti.func((origin: ti.Vector, ray: ti.Vect
   for (let i of ti.range(geometryLength)) {
     // @ts-ignore
     let res = rayIntersectsTriangle(origin, ray, geometry[(i, 0)], geometry[(i, 1)], geometry[(i, 2)]);
-    if (res.intersects && res.t < t) {
+    if (res.intersects && res.t < t && res.t > 0.00001) {
       isHit = true
       intersectionPoint = res.intersectionPoint
       t = res.t

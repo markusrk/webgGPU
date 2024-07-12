@@ -16,7 +16,7 @@ let polygonInJS = [
 const wallsInJs = inwardsBoxFromAABB(
   [resolution * 0.1, resolution * 0.1, 0],
   [resolution * 0.9, resolution * 0.9, 400]
-);
+)];
 
 document.getElementById("windowSize")!.addEventListener("input", (e) => {
   const v = (e.target as HTMLInputElement).value;
