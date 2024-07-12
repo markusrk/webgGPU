@@ -38,7 +38,7 @@ const downwardsFacingTrianglesFromPoints = (p1: Point, p2: Point): Triangle[] =>
   ];
 };
 
-export const inwardsBoxFromAABBWithwindow = (p1: Point, p2: Point): Triangle[] => {
+export const inwardsBoxFromAABBWithwindow = (p1: Point, p2: Point, windowWidth: number, windowHeight: number): Triangle[] => {
   const x = [p2[0] - p1[0], 0, 0] as Point;
   const y = [0, p2[1] - p1[1], 0] as Point;
   const z = [0, 0, p2[2] - p1[2]] as Point;
@@ -46,8 +46,8 @@ export const inwardsBoxFromAABBWithwindow = (p1: Point, p2: Point): Triangle[] =
   const front = wallTrianglesFromPoints(add(p1, x), add(p1, z));
   const right = wallTrianglesFromPoints(sub(p2, z), sub(p2, y));
 
-  const wp1 = add(add(add(p1, y), scalarMul(x, 0.4)), scalarMul(z, 0.0));
-  const wp2 = add(add(add(p1, y),scalarMul(z,0.80)), scalarMul(x, 0.6));
+  const wp1 = add(add(add(p1, y), scalarMul(x, (0.5-windowWidth/2))), scalarMul(z, 0.0));
+  const wp2 = add(add(add(p1, y),scalarMul(z,windowHeight)), scalarMul(x, (0.5+windowWidth/2)));
   const back = wallWithWindowFromPoints(add(p1, y), p2, wp1, wp2);
   const left = wallTrianglesFromPoints(p1, add(add(p1, z), y));
   const top = downwardsFacingTrianglesFromPoints(add(p1, z), p2);

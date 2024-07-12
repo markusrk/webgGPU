@@ -6,6 +6,8 @@ import { boxFromAABBWithHoleInTheTop, inwardsBoxFromAABBWithwindow } from "./geo
 const resolution = 1000;
 let defaultWindowOptions = { windowSize: 50, windowSpacing: 200, windowHeight: 100 };
 let bounceOptions = {materialReflectivity: 0.5, maxBounces: 6}
+let windowWidth = 0.2;
+let windowHeight = 0.2;
 
 let polygonInJS = [
   [resolution * 0.1, resolution * 0.1],
@@ -15,24 +17,38 @@ let polygonInJS = [
   [resolution * 0.1, resolution * 0.1],
 ] as [number, number][];
 
-const wallsInJs = [
+let wallsInJs = [
   ...boxFromAABBWithHoleInTheTop([resolution * 0.1, resolution * 0.1, 0], [resolution * 0.9, resolution * 0.9, 400]),
   ...inwardsBoxFromAABBWithwindow(
     [resolution * 0.1, resolution * 0.1, 0],
-    [resolution * 0.9, resolution * 0.9, 400]
+    [resolution * 0.9, resolution * 0.9, 400],windowWidth,windowHeight
   ),
 ];
 
 
 document.getElementById("windowSize")!.addEventListener("input", (e) => {
   const v = (e.target as HTMLInputElement).value;
-  defaultWindowOptions = { ...defaultWindowOptions, windowSize: parseInt(v) };
-  updateImage(polygonInJS, defaultWindowOptions);
+  windowWidth = parseFloat(v);
+  wallsInJs = [
+    ...boxFromAABBWithHoleInTheTop([resolution * 0.1, resolution * 0.1, 0], [resolution * 0.9, resolution * 0.9, 400]),
+    ...inwardsBoxFromAABBWithwindow(
+      [resolution * 0.1, resolution * 0.1, 0],
+      [resolution * 0.9, resolution * 0.9, 400],windowWidth,windowHeight
+    ),
+  ];
+  updateImage(polygonInJS, wallsInJs, bounceOptions);
 });
 document.getElementById("windowHeight")!.addEventListener("input", (e) => {
   const v = (e.target as HTMLInputElement).value;
-  defaultWindowOptions = { ...defaultWindowOptions, windowHeight: parseInt(v) };
-  updateImage(polygonInJS, defaultWindowOptions);
+  windowHeight = parseFloat(v);
+  wallsInJs = [
+    ...boxFromAABBWithHoleInTheTop([resolution * 0.1, resolution * 0.1, 0], [resolution * 0.9, resolution * 0.9, 400]),
+    ...inwardsBoxFromAABBWithwindow(
+      [resolution * 0.1, resolution * 0.1, 0],
+      [resolution * 0.9, resolution * 0.9, 400],windowWidth,windowHeight
+    ),
+  ];
+  updateImage(polygonInJS, wallsInJs, bounceOptions);
 });
 document.getElementById("reflectivityInput")!.addEventListener("input", (e) => {
   const v = (e.target as HTMLInputElement).value;
