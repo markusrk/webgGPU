@@ -63,6 +63,6 @@ const mul = (a: Point, b: Point): Point => {
   return a.map((_, i) => a[i] * b[i]) as Point;
 };
 
-const scalarMul = (a: Point, b: number): Point => {
+export const scalarMul = (a: Point, b: number): Point => {
   return a.map((x) => x * b) as Point;
 };
