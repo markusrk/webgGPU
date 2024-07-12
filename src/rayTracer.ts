@@ -168,6 +168,7 @@ export const rayTrace = async (
               nextPosition = position;
               bounces = 0;
               remainingLightFactor = 1.0;
+              tracedRays = tracedRays + 1;
             } else {
               // assign next position adjust for reflection factor and restart.
               nextPosition = res.intersectionPoint;
