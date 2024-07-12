@@ -1,6 +1,6 @@
 import * as ti from "taichi.js";
 import { getColorForScore } from "./colors";
-import { rayIntersectsTriangle } from "./intersect";
+import { intersectRayWithGeometry, rayIntersectsTriangle } from "./intersect";
 import { isPointInsidePolygon } from "./pointInPolygon";
 import { generateRay, generateRayFromNormal } from "./randomRays";
 import { getSpecificVCSScoreAtRay } from "./sky";
@@ -50,6 +50,7 @@ export const init = async (input_canvas, resolution) => {
     generateRayFromNormal,
     generateRay,
     getSpecificVCSScoreAtRay,
+    intersectRayWithGeometry,
   });
 
   const initilizeGrid = ti.kernel(() => {
@@ -152,12 +153,8 @@ export const rayTrace = async (
       for (let m of ti.range(128)) {
         const ray = generateRayFromNormal([0.0, 0.0, 1.0]);
         let isHit = false;
-        // todo: rebuild this as a function and make sure to find the first intersection, not just any intersection.
-        for (let i of ti.range(wallCount)) {
-          // @ts-ignore
-          let res = rayIntersectsTriangle(nextPosition, ray, walls[(i, 0)], walls[(i, 1)], walls[(i, 2)]);
-          isHit = isHit || res.intersects;
-        }
+        let res = intersectRayWithGeometry(nextPosition, ray, walls, wallCount);
+        isHit = res.isHit;
         if (!isHit && tracedRaysTarget > tracedRays) {
           const scoreForAngle = getSpecificVCSScoreAtRay(ray);
           score = score + scoreForAngle;

@@ -35,15 +35,32 @@ export const rayIntersectsTriangle = ti.func(
     const vec3 = p1 - p3;
     const normal = ti.cross(vec2, vec1);
     const dot = ti.dot(normal, ray);
+    let t= ti.f32(0)
     let rayPointInPlane = [ti.f32(0.0), ti.f32(0.0), ti.f32(0.0)] as ti.Vector<ti.f32>;
     if (dot >= 0.00001) {
-      const t = ti.dot(p1 - origin, normal) / ti.dot(ray, normal);
+      t = ti.dot(p1 - origin, normal) / ti.dot(ray, normal);
       rayPointInPlane = origin + ray * t;
       const cross1 = ti.cross(vec1, rayPointInPlane - p1);
       const cross2 = ti.cross(vec2, rayPointInPlane - p2);
       const cross3 = ti.cross(vec3, rayPointInPlane - p3);
       intersects = ti.dot(cross1, cross2) >= 0 && ti.dot(cross2, cross3) >= 0;
     }
-    return {intersects, nextPoint: rayPointInPlane};
+    return {intersects, intersectionPoint: rayPointInPlane, t};
   }
 );
+
+export const intersectRayWithGeometry = ti.func((origin: ti.Vector, ray: ti.Vector, geometry: ti.field<ti.Vector>, geometryLength: number): ti.Vector => {
+  let isHit = false
+  let intersectionPoint = [ti.f32(0.0), ti.f32(0.0), ti.f32(0.0)] as ti.Vector
+  let t = ti.f32(1000000000)
+  for (let i of ti.range(geometryLength)) {
+    // @ts-ignore
+    let res = rayIntersectsTriangle(origin, ray, geometry[(i, 0)], geometry[(i, 1)], geometry[(i, 2)]);
+    if (res.intersects && res.t < t) {
+      isHit = true
+      intersectionPoint = res.intersectionPoint
+      t = res.t
+    }
+  }
+  return {isHit, intersectionPoint}
+})
