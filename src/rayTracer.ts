@@ -1,18 +1,15 @@
 import * as ti from "taichi.js";
 import { getColorForScore } from "./colors";
-import { rayIntersectsRectangle } from "./intersect";
+import { intersectRayWithGeometry, rayIntersectsTriangle } from "./intersect";
 import { isPointInsidePolygon } from "./pointInPolygon";
-import { computeRayDirection, getRayForAngle, getVscScoreAtAngle } from "./rayGeneration";
+import { generateRay, generateRayFromNormal } from "./randomRays";
+import { getSpecificVCSScoreAtRay } from "./sky";
 
-const VERTICAL_RESOLUTION = 64;
-const HORISONTAL_RESOLUTION = 256;
-const VERTICAL_STEP = Math.PI / 2 / VERTICAL_RESOLUTION;
-const HORISONTAL_STEP = (Math.PI * 2) / HORISONTAL_RESOLUTION;
 const MAX_DAYLIGHT = 12.641899784120097;
 
 let currentToken = Symbol(); // Step 1: Initialize a unique symbol as the cancellation token
 
-let N, points, scoresMask, scores, pixels;
+let N, points, scoresMask, scores, pixels, traceCount;
 let isInitialized = false;
 
 let htmlCanvas;
@@ -23,6 +20,7 @@ const colorPalletJS = [
   [0, 0.2, 1, 0.1],
   [0, 0.6, 1, 0.3],
   [0, 1, 0.1, 1],
+  [0, 1, 0.1, 1000000],
 ];
 const colorPalletLength = colorPalletJS.length;
 const colorPallet = ti.Vector.field(4, ti.f32, colorPalletLength) as ti.Field;
@@ -37,6 +35,7 @@ export const init = async (input_canvas, resolution) => {
   scoresMask = ti.field(ti.f32, [N, N]) as ti.Field;
   scores = ti.field(ti.f32, [N, N]) as ti.Field;
   pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
+  traceCount = ti.field(ti.i32, [N, N]) as ti.Field;
 
   ti.addToKernelScope({
     points,
@@ -44,24 +43,22 @@ export const init = async (input_canvas, resolution) => {
     N,
     scores,
     scoresMask,
+    traceCount,
     isPointInsidePolygon,
-    rayIntersectsRectangle,
-    getRayForAngle,
-    computeRayDirection,
-    getVscScoreAtAngle,
-    VERTICAL_RESOLUTION,
-    HORISONTAL_RESOLUTION,
-    VERTICAL_STEP,
-    HORISONTAL_STEP,
+    rayIntersectsTriangle,
     MAX_DAYLIGHT,
     colorPallet,
     colorPalletLength,
     getColorForScore,
+    generateRayFromNormal,
+    generateRay,
+    getSpecificVCSScoreAtRay,
+    intersectRayWithGeometry,
   });
 
   const initilizeGrid = ti.kernel(() => {
     for (let I of ti.ndrange(N, N)) {
-      points[I] = [I[0], I[1], 0];
+      points[I] = [I[0], I[1], 10];
     }
   });
   initilizeGrid();
@@ -102,7 +99,8 @@ export const preComputeSurroundings = async () => {
 
 export const rayTrace = async (
   polygonInJS: [number, number][],
-  windowsInJS: [[number, number, number], [number, number, number]][]
+  wallsInJS: [[number, number, number], [number, number, number]][],
+  options = { materialReflectivity: 0.7, maxBounces: 6 }
 ) => {
   if (!isInitialized) {
     console.log("Triggered rayTrace before initialization was done!!!");
@@ -115,19 +113,20 @@ export const rayTrace = async (
   polygon.fromArray(polygonInJS);
   if (thisToken !== currentToken) return;
 
-  const windowCount = windowsInJS.length;
-  const windows = ti.Vector.field(3, ti.f32, [windowCount, 2]);
+  const wallCount = wallsInJS.length;
+  const walls = ti.Vector.field(3, ti.f32, [wallCount, 3]);
 
   if (thisToken !== currentToken) return;
-  windows.fromArray(windowsInJS);
+  walls.fromArray(wallsInJS);
 
   if (thisToken !== currentToken) return;
 
   ti.addToKernelScope({
-    windows,
-    windowCount,
+    walls,
+    wallCount,
     polygon,
     polygonLength,
+    options,
   });
 
   const updateScoresMask = ti.kernel(() => {
@@ -139,7 +138,7 @@ export const rayTrace = async (
   const updateTexture = ti.kernel(() => {
     for (let I of ti.ndrange(N, N)) {
       if (scoresMask[I] > 0) {
-        let color = getColorForScore(scores[I], colorPallet, colorPalletLength);
+        let color = getColorForScore(scores[I] / traceCount[I], colorPallet, colorPalletLength);
         pixels[I] = color;
       } else {
         pixels[I] = [0, 0, 0];
@@ -147,37 +146,55 @@ export const rayTrace = async (
     }
   });
 
-  const rayTrace = ti.kernel((stepSize: ti.i32, time: ti.i32) => {
+  const rayTrace = ti.kernel((stepSize: ti.i32, reset: Bool) => {
     const computeScoreForPoint = (position: ti.Vector) => {
       let score = ti.f32(0);
-      for (let I of ti.ndrange(VERTICAL_RESOLUTION, HORISONTAL_RESOLUTION / stepSize)) {
-        const I2 = [
-          I.x,
-          (I.y * ti.i32(stepSize) + ti.i32(time) + (I.x * HORISONTAL_RESOLUTION) / stepSize / 1.5) %
-            HORISONTAL_RESOLUTION,
-        ];
-        const ray = getRayForAngle(VERTICAL_STEP, HORISONTAL_STEP, I2[0], I2[1]);
-        const scoreForAngle = getVscScoreAtAngle(ray, VERTICAL_STEP, HORISONTAL_STEP);
-        for (let i of ti.range(windowCount)) {
-          // @ts-ignore
-          const recStart = windows[(i, 0)];
-          // @ts-ignore
-          const recEnd = windows[(i, 1)];
-          const isInside = rayIntersectsRectangle(position, ray, recStart, recEnd);
-          if (isInside) {
-            score = score + scoreForAngle;
+      let tracedRays = 0;
+      let bounces = 0;
+      let remainingLightFactor = ti.f32(1.0);
+      const maxBounces = options.maxBounces;
+      const UNDER_BOOKING_FACTOR = 0.9
+      const tracedRaysTarget = stepSize/UNDER_BOOKING_FACTOR*maxBounces;
+      let nextPosition = position;
+      // Todo:  build a smarter logic here so we are not forced to run MaxBounce*tracedRaysTarget amount of times every time. Example run 1000 rays and just divide the score by the amount of finished traces for each point.
+      for (let _ of ti.range(stepSize)) {
+        if (tracedRaysTarget > tracedRays) {
+          const ray = generateRayFromNormal([0.0, 0.0, 1.0]);
+          let res = intersectRayWithGeometry(nextPosition, ray, walls, wallCount);
+          if (!res.isHit) {
+            const scoreForAngle = getSpecificVCSScoreAtRay(ray);
+            score = score + scoreForAngle * remainingLightFactor;
+            tracedRays = tracedRays + 1;
+            bounces = 0;
+            nextPosition = position;
+            remainingLightFactor = 1.0;
+          } else {
+            if (bounces == maxBounces) {
+              nextPosition = position;
+              bounces = 0;
+              remainingLightFactor = 1.0;
+              tracedRays = tracedRays + 1;
+            } else {
+              // assign next position adjust for reflection factor and restart.
+              nextPosition = res.intersectionPoint;
+              remainingLightFactor = remainingLightFactor * options.materialReflectivity;
+              bounces = bounces + 1;
+            }
           }
         }
       }
-      return score / MAX_DAYLIGHT;
+      return { score, tracedRays };
     };
 
     for (let I of ti.ndrange(N, N)) {
-      for (let i of ti.range(1)) {
-        if (scoresMask[I] > 0) {
-          scores[I] =
-            (scores[I] * (time - 1)) / ti.max(time, 1) + (computeScoreForPoint(points[I]) * stepSize) / ti.max(time, 1);
-        }
+      const res = computeScoreForPoint(points[I]);
+      if (reset){
+        scores[I] = 0;
+        traceCount[I] = 0;
+      }
+      if (scoresMask[I] > 0) {
+        scores[I] = scores[I] + res.score;
+        traceCount[I] = traceCount[I] + res.tracedRays;
       }
     }
   });
@@ -185,35 +202,20 @@ export const rayTrace = async (
   updateScoresMask();
   if (thisToken !== currentToken) return;
   let i = 0;
-  const stepSize = 32;
+  const steps = 320;
+  const tracesPerStep = 20;
   async function frame() {
     if (thisToken !== currentToken) return;
     i = i + 1;
-    rayTrace(stepSize, i);
+    rayTrace(tracesPerStep, false);
     if (thisToken !== currentToken) return;
     updateTexture();
     if (thisToken !== currentToken) return;
     canvas.setImage(pixels);
 
-    i < stepSize && requestAnimationFrame(frame);
+    i < steps && requestAnimationFrame(frame);
   }
   if (thisToken !== currentToken) return;
+  rayTrace(tracesPerStep, true);
   requestAnimationFrame(frame);
 };
-
-// delete later. Test code to calculate max daylight score
-const getVscScoreAtAngleJS = (angle, verticalStep, horizontalStep) => {
-  const vscAtAngle = 1.0 + 2.0 * Math.sin(angle);
-  const deltaOmega = Math.cos(angle) * verticalStep * horizontalStep; // the area of the rectangle this ray covers on the unit sphere
-  return vscAtAngle * deltaOmega;
-};
-
-let daylightScore = 0;
-for (let i = 0; i < VERTICAL_RESOLUTION; i++) {
-  for (let j = 0; j < HORISONTAL_RESOLUTION; j++) {
-    const angle = i * VERTICAL_STEP;
-    const score = getVscScoreAtAngleJS(angle, VERTICAL_STEP, HORISONTAL_STEP);
-    daylightScore += score;
-  }
-}
-console.log("daylightScore = ", daylightScore);

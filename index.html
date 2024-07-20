@@ -6,8 +6,11 @@
         <canvas id="result_canvas" style="flex: 1;"></canvas>
         <div style="flex: 1;">
             <div id="dragElement" style="position: absolute; top: 600px; left: 100px; width: 10px; height: 10px; background-color: blue; border-radius: 50%; cursor: move;"></div>
-            window size: <input id="windowSize" type="number" min="0" max="500" step="10" style=" margin: 10px;" value="50" />
-            window height: <input id="windowHeight" type="number" min="0" max="500" step="10" style="margin: 10px;" value="50" />
+            window size: <input id="windowSize" type="number" min="0" max="1" step="0.1" style=" margin: 10px;" value="0.2" />
+            window height: <input id="windowHeight" type="number" min="0" max="1" step="0.1" style="margin: 10px;" value="0.2" />
+            reflectivity: <input id="reflectivityInput" type="number" min="0" max="1" step="0.1" style="margin: 10px;" value="0.5" />
+            <br/>
+            max bounces: <input id="maxBouncesInput" type="number" min="0" max="10" step="1" style="margin: 10px;" value="6" />
             <br>
             Pull the blue point to move change the shape
         </div>
