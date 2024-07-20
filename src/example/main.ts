@@ -5,7 +5,7 @@ import { boxFromAABBWithHoleInTheTop, inwardsBoxFromAABBWithwindow } from "./geo
 
 const resolution = 1000;
 let defaultWindowOptions = { windowSize: 50, windowSpacing: 200, windowHeight: 100 };
-let bounceOptions = {materialReflectivity: 0.5, maxBounces: 6}
+let bounceOptions = {materialReflectivity: 0.2, maxBounces: 6}
 let windowWidth = 0.2;
 let windowHeight = 0.2;
 
