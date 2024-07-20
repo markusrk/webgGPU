@@ -156,10 +156,11 @@ export const rayTrace = async (
       const UNDER_BOOKING_FACTOR = 0.9
       const tracedRaysTarget = stepSize/UNDER_BOOKING_FACTOR*maxBounces;
       let nextPosition = position;
+      let nextNormal = [ti.f32(0.0), ti.f32(0.0), ti.f32(1.0)];
       // Todo:  build a smarter logic here so we are not forced to run MaxBounce*tracedRaysTarget amount of times every time. Example run 1000 rays and just divide the score by the amount of finished traces for each point.
       for (let _ of ti.range(stepSize)) {
         if (tracedRaysTarget > tracedRays) {
-          const ray = generateRayFromNormal([0.0, 0.0, 1.0]);
+          const ray = generateRayFromNormal(nextNormal);
           let res = intersectRayWithGeometry(nextPosition, ray, walls, wallCount);
           if (!res.isHit) {
             const scoreForAngle = getSpecificVCSScoreAtRay(ray);
@@ -171,12 +172,15 @@ export const rayTrace = async (
           } else {
             if (bounces == maxBounces) {
               nextPosition = position;
+              nextNormal = [0.0, 0.0, 1.0];
               bounces = 0;
               remainingLightFactor = 1.0;
               tracedRays = tracedRays + 1;
+              
             } else {
               // assign next position adjust for reflection factor and restart.
               nextPosition = res.intersectionPoint;
+              nextNormal = res.triangleNormal;
               remainingLightFactor = remainingLightFactor * options.materialReflectivity;
               bounces = bounces + 1;
             }
@@ -202,8 +206,8 @@ export const rayTrace = async (
   updateScoresMask();
   if (thisToken !== currentToken) return;
   let i = 0;
-  const steps = 320;
-  const tracesPerStep = 20;
+  const steps = 1000;
+  const tracesPerStep = 6;
   async function frame() {
     if (thisToken !== currentToken) return;
     i = i + 1;
