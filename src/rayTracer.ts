@@ -154,7 +154,7 @@ export const rayTrace = async (
       let remainingLightFactor = ti.f32(1.0);
       const maxBounces = options.maxBounces;
       const UNDER_BOOKING_FACTOR = 0.9
-      const tracedRaysTarget = stepSize/UNDER_BOOKING_FACTOR*maxBounces;
+      const tracedRaysTarget = stepSize/UNDER_BOOKING_FACTOR*ti.max(1,maxBounces);
       let nextPosition = position;
       let nextNormal = [ti.f32(0.0), ti.f32(0.0), ti.f32(1.0)];
       // Todo:  build a smarter logic here so we are not forced to run MaxBounce*tracedRaysTarget amount of times every time. Example run 1000 rays and just divide the score by the amount of finished traces for each point.
@@ -170,7 +170,7 @@ export const rayTrace = async (
             nextPosition = position;
             remainingLightFactor = 1.0;
           } else {
-            if (bounces == maxBounces) {
+            if (bounces >= maxBounces) {
               nextPosition = position;
               nextNormal = [0.0, 0.0, 1.0];
               bounces = 0;
