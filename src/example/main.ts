@@ -1,7 +1,7 @@
 import * as ti from "taichi.js";
-import { generateWindowsAlongWall } from "../geometryTools";
 import { init, rayTrace } from "../rayTracer";
-import { boxFromAABBWithHoleInTheTop, inwardsBoxFromAABBWithwindow } from "./geometryBuilder";
+import { inwardsBoxFromAABBWithwindow } from "./geometryBuilder";
+const OFFSET = 0.01
 
 const resolution = 1000;
 let defaultWindowOptions = { windowSize: 50, windowSpacing: 200, windowHeight: 100 };
@@ -20,8 +20,8 @@ let polygonInJS = [
 let wallsInJs = [
   // ...boxFromAABBWithHoleInTheTop([resolution * 0.1, resolution * 0.1, 0], [resolution * 0.9, resolution * 0.9, 400]),
   ...inwardsBoxFromAABBWithwindow(
-    [resolution * 0.1, resolution * 0.1, 0],
-    [resolution * 0.9, resolution * 0.9, 1000],
+    [resolution * (0.1-OFFSET), resolution * (0.1-OFFSET), 0],
+    [resolution * (0.9+OFFSET), resolution * (0.9+OFFSET), 1000],
     windowWidth,
     windowHeight
   ),
@@ -33,8 +33,8 @@ document.getElementById("windowSize")!.addEventListener("input", (e) => {
   wallsInJs = [
     // ...boxFromAABBWithHoleInTheTop([resolution * 0.1, resolution * 0.1, 0], [resolution * 0.9, resolution * 0.9, 400]),
     ...inwardsBoxFromAABBWithwindow(
-      [resolution * 0.1, resolution * 0.1, 0],
-      [resolution * 0.9, resolution * 0.9, 400],
+      [resolution * (0.1-OFFSET), resolution * (0.1-OFFSET), 0],
+      [resolution * (0.9+OFFSET), resolution * (0.9+OFFSET), 1000],
       windowWidth,
       windowHeight
     ),
@@ -47,8 +47,8 @@ document.getElementById("windowHeight")!.addEventListener("input", (e) => {
   wallsInJs = [
     // ...boxFromAABBWithHoleInTheTop([resolution * 0.1, resolution * 0.1, 0], [resolution * 0.9, resolution * 0.9, 400]),
     ...inwardsBoxFromAABBWithwindow(
-      [resolution * 0.1, resolution * 0.1, 0],
-      [resolution * 0.9, resolution * 0.9, 400],
+      [resolution * (0.1-OFFSET), resolution * (0.1-OFFSET), 0],
+      [resolution * (0.9+OFFSET), resolution * (0.9+OFFSET), 1000],
       windowWidth,
       windowHeight
     ),
