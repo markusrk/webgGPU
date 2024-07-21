@@ -146,20 +146,16 @@ export const rayTrace = async (
     }
   });
 
-  const rayTrace = ti.kernel((stepSize: ti.i32, reset: Bool) => {
+  const rayTrace = ti.kernel((tracedRaysTarget: ti.i32, reset: Bool) => {
     const computeScoreForPoint = (position: ti.Vector) => {
       let score = ti.f32(0);
       let tracedRays = 0;
       let bounces = 0;
       let remainingLightFactor = ti.f32(1.0);
       const maxBounces = options.maxBounces;
-      const UNDER_BOOKING_FACTOR = 0.9
-      const tracedRaysTarget = stepSize/UNDER_BOOKING_FACTOR*ti.max(1,maxBounces);
       let nextPosition = position;
       let nextNormal = [ti.f32(0.0), ti.f32(0.0), ti.f32(1.0)];
-      // Todo:  build a smarter logic here so we are not forced to run MaxBounce*tracedRaysTarget amount of times every time. Example run 1000 rays and just divide the score by the amount of finished traces for each point.
-      for (let _ of ti.range(stepSize)) {
-        if (tracedRaysTarget > tracedRays) {
+      for (let _ of ti.range(tracedRaysTarget)) {
           const ray = generateRayFromNormal(nextNormal);
           let res = intersectRayWithGeometry(nextPosition, ray, walls, wallCount);
           if (!res.isHit) {
@@ -185,7 +181,6 @@ export const rayTrace = async (
               bounces = bounces + 1;
             }
           }
-        }
       }
       return { score, tracedRays };
     };
@@ -207,7 +202,7 @@ export const rayTrace = async (
   if (thisToken !== currentToken) return;
   let i = 0;
   const steps = 1000;
-  const tracesPerStep = 6;
+  const tracesPerStep = 60;
   async function frame() {
     if (thisToken !== currentToken) return;
     i = i + 1;
