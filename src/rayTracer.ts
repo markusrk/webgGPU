@@ -156,38 +156,37 @@ export const rayTrace = async (
       let nextPosition = position;
       let nextNormal = [ti.f32(0.0), ti.f32(0.0), ti.f32(1.0)];
       for (let _ of ti.range(tracedRaysTarget)) {
-          const ray = generateRayFromNormal(nextNormal);
-          let res = intersectRayWithGeometry(nextPosition, ray, walls, wallCount);
-          if (!res.isHit) {
-            const scoreForAngle = getSpecificVCSScoreAtRay(ray);
-            score = score + scoreForAngle * remainingLightFactor;
-            tracedRays = tracedRays + 1;
-            bounces = 0;
+        const ray = generateRayFromNormal(nextNormal);
+        let res = intersectRayWithGeometry(nextPosition, ray, walls, wallCount);
+        if (!res.isHit) {
+          const scoreForAngle = getSpecificVCSScoreAtRay(ray);
+          score = score + scoreForAngle * remainingLightFactor;
+          tracedRays = tracedRays + 1;
+          bounces = 0;
+          nextPosition = position;
+          remainingLightFactor = 1.0;
+        } else {
+          if (bounces >= maxBounces) {
             nextPosition = position;
+            nextNormal = [0.0, 0.0, 1.0];
+            bounces = 0;
             remainingLightFactor = 1.0;
+            tracedRays = tracedRays + 1;
           } else {
-            if (bounces >= maxBounces) {
-              nextPosition = position;
-              nextNormal = [0.0, 0.0, 1.0];
-              bounces = 0;
-              remainingLightFactor = 1.0;
-              tracedRays = tracedRays + 1;
-              
-            } else {
-              // assign next position adjust for reflection factor and restart.
-              nextPosition = res.intersectionPoint;
-              nextNormal = res.triangleNormal;
-              remainingLightFactor = remainingLightFactor * options.materialReflectivity;
-              bounces = bounces + 1;
-            }
+            // assign next position adjust for reflection factor and restart.
+            nextPosition = res.intersectionPoint;
+            nextNormal = res.triangleNormal;
+            remainingLightFactor = remainingLightFactor * options.materialReflectivity;
+            bounces = bounces + 1;
           }
+        }
       }
       return { score, tracedRays };
     };
 
     for (let I of ti.ndrange(N, N)) {
       const res = computeScoreForPoint(points[I]);
-      if (reset){
+      if (reset) {
         scores[I] = 0;
         traceCount[I] = 0;
       }
