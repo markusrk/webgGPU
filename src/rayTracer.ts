@@ -138,6 +138,17 @@ export const rayTrace = async (
   const updateTexture = ti.kernel(() => {
     for (let I of ti.ndrange(N, N)) {
       if (scoresMask[I] > 0) {
+// Test code to average pixel scores over areas
+        // let scoresAgg = ti.f32(0);
+        // let traceCountAgg = ti.i32(0);
+        // for (let J of ti.ndrange(2, 2)) {
+        //   const i = I + J;
+        //   if (i[0] >= 0 && i[0] < N && i[1] >= 0 && i[1] < N) {
+        //     scoresAgg = scoresAgg + scores[i];
+        //     traceCountAgg = traceCountAgg + traceCount[i];
+        //   }
+        // }
+        // let color = getColorForScore(scoresAgg / traceCountAgg, colorPallet, colorPalletLength);
         let color = getColorForScore(scores[I] / traceCount[I], colorPallet, colorPalletLength);
         pixels[I] = color;
       } else {
