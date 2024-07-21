@@ -73,8 +73,9 @@ export const inwardsBoxFromAABBWithHoleInTheTop = (p1: Point, p2: Point): Triang
   const back = wallTrianglesFromPoints(add(p1, y), p2);
   const left = wallTrianglesFromPoints(p1, add(add(p1, z), y));
   const top = downwardsFacingTrianglesFromPoints(add(p1, z), p2);
+  const bottom = upwardsFacingTrianglesFromPoints(p1, sub(p2, z));
 
-  return [...front, ...right, ...back, ...left];
+  return [...front, ...right, ...back, ...left, ...top, ...bottom];
 };
 
 // This code is not tested. Please don't use.
