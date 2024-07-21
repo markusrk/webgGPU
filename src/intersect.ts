@@ -33,11 +33,13 @@ export const rayIntersectsTriangle = ti.func(
     const vec1 = p2 - p1;
     const vec2 = p3 - p2;
     const vec3 = p1 - p3;
-    const normal = ti.cross(vec2, vec1);
+    const normal = ti.cross(vec1, vec2);
     const dot = ti.dot(normal, ray);
+
     let t= ti.f32(0)
     let rayPointInPlane = [ti.f32(0.0), ti.f32(0.0), ti.f32(0.0)] as ti.Vector<ti.f32>;
-    if (dot >= 0.00001) {
+
+    if (dot <= -0.00001) {
       t = ti.dot(p1 - origin, normal) / ti.dot(ray, normal);
       rayPointInPlane = origin + ray * t;
       const cross1 = ti.cross(vec1, rayPointInPlane - p1);
