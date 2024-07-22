@@ -16,14 +16,12 @@ export const init = async (input_canvas) => {
 export const initialize = async () => {
   await ti.init();
 
-
   const pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.field;
 
   const M = 50000;
   const vertices = ti.Vector.field(3, ti.f32, [M * 3]) as ti.field;
   const indices = ti.Vector.field(3, ti.i32, [M]) as ti.field;
   const indicesindices = ti.field(ti.i32, [M]) as ti.field;
-
 
   ti.addToKernelScope({
     vertices,
@@ -50,15 +48,13 @@ export const initialize = async () => {
     return true;
   });
   await initVertices().then(() => console.log("initVertices done"));
-
   const countKernel = ti.kernel(() => {
     let splitCounts = countTriangles(vertices, indices, M, 500);
     return splitCounts;
   });
 
   const splitCounts = await countKernel();
-  const splitPoints = splitCounts.map((_, i) =>  splitCounts.slice(0, i+1).reduce((a, b) => a + b, 0) );
-  console.log("splitPoints", splitPoints);
+  const splitPoints = splitCounts.map((_, i) => splitCounts.slice(0, i + 1).reduce((a, b) => a + b, 0));
 
   const splitsInJS = splitPoints.map((_, i) => {
     return { xMin: 500 * i, xMax: (i + 1) * 500, iStart: splitPoints[i - 1] || 0, iEnd: splitPoints[i] };
@@ -74,7 +70,6 @@ export const initialize = async () => {
   const sortKernel = ti.kernel(() => {
     sortTriangles(vertices, indices, M, indicesindices, splits, 2);
   });
-
 
   await sortKernel().then(() => console.log("sortKernel done"));
 
@@ -92,7 +87,7 @@ export const initialize = async () => {
       const split = splits[selectedSplitIndex];
 
       for (let m of ti.range(split.iEnd - split.iStart)) {
-        let m2 = m+split.iStart;
+        let m2 = m + split.iStart;
         const indicesForTriangle = indices[indicesindices[m2]];
         const v1 = vertices[indicesForTriangle[0]];
         const v2 = vertices[indicesForTriangle[1]];
