@@ -1,5 +1,6 @@
 import * as ti from "taichi.js";
 import { rayIntersectsTriangle } from "../intersect";
+import { countTriangles, sortTriangles } from "../accelleration";
 
 const N = 1000;
 
@@ -28,6 +29,7 @@ export const initialize = async () => {
   const M = 100000;
   const vertices = ti.Vector.field(3, ti.f32, [M * 3]) as ti.field;
   const indices = ti.Vector.field(3, ti.i32, [M * 3]) as ti.field;
+  const resultsField = ti.Vector.field(3, ti.f32, [M * 3]) as ti.field;
 
   let testValue = ti.Vector.field(3, ti.f32, [4]) as ti.field;
 
@@ -40,6 +42,9 @@ export const initialize = async () => {
     rayIntersectsTriangle,
     testValue,
     triangle,
+    countTriangles,
+    sortTriangles,
+    resultsField,
   });
 
   const initVertices = ti.kernel(() => {
@@ -68,12 +73,34 @@ export const initialize = async () => {
         const v3 = vertices[step + 2];
         const res = rayIntersectsTriangle([I[0], I[1], 10000], [0, 0, -1], v1, v2, v3);
         isInside = isInside || res.intersects;
-        color = color + isInside * ( 1- res.t/10000)*255;
+        color = color + isInside * (1 - res.t / 10000) * 255;
       }
-      pixels[I] = color
+      pixels[I] = color;
     }
     return true;
   });
+
+  const countKernel = ti.kernel(() => {
+    let splitCounts = countTriangles(vertices, M, 500);
+    return splitCounts;
+  });
+
+  const splitCounts = await countKernel();
+  console.log("splitCounts", splitCounts);
+
+  const splitsInJS = splitCounts.map((split, i) => {return { xMin: 500*i, xMax: (i+1)*500, iStart: splitCounts[i-1] || 0 }});
+
+  const splitType = ti.types.struct({xMin: ti.f32, xMax: ti.f32, iStart: ti.i32});
+  const splits = ti.field( splitType, [splitCounts.length]) as ti.field;
+  splits.fromArray(splitsInJS);
+  splits.toArray().then(console.log);
+
+  ti.addToKernelScope({splits,splitCounts})
+
+  const sortKernel = ti.kernel(() => {
+    const res = sortTriangles(vertices, M, splits, 2, resultsField);
+  });
+
   const stepSize = 50000;
   let i = 0;
   while (i < M) {
