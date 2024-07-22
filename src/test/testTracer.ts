@@ -26,7 +26,7 @@ export const initialize = async () => {
   triangle.fromArray(triangleInJs);
   const pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.field;
 
-  const M = 100000;
+  const M = 50000;
   const vertices = ti.Vector.field(3, ti.f32, [M * 3]) as ti.field;
   const indices = ti.Vector.field(3, ti.i32, [M * 3]) as ti.field;
   const resultsField = ti.Vector.field(3, ti.f32, [M * 3]) as ti.field;
@@ -61,54 +61,63 @@ export const initialize = async () => {
   });
   await initVertices().then(() => console.log("initVertices done"));
 
-  const calculatePixels = ti.kernel({ start: ti.i32, stepSize2: ti.i32 }, (start, stepSize2) => {
-    for (let I of ti.ndrange(N, N)) {
-      let isInside = pixels[I][0] > 0;
-      let color = [ti.f32(0), 0, 0];
-      for (let m of ti.range(stepSize2)) {
-        let m2 = m + start;
-        const step = m2 * 3;
-        const v1 = vertices[step];
-        const v2 = vertices[step + 1];
-        const v3 = vertices[step + 2];
-        const res = rayIntersectsTriangle([I[0], I[1], 10000], [0, 0, -1], v1, v2, v3);
-        isInside = isInside || res.intersects;
-        color = color + isInside * (1 - res.t / 10000) * 255;
-      }
-      pixels[I] = color;
-    }
-    return true;
-  });
-
   const countKernel = ti.kernel(() => {
     let splitCounts = countTriangles(vertices, M, 500);
     return splitCounts;
   });
 
   const splitCounts = await countKernel();
-  console.log("splitCounts", splitCounts);
+  const splitPoints = splitCounts.map((_, i) =>  splitCounts.slice(0, i+1).reduce((a, b) => a + b, 0) );
+  console.log("splitPoints", splitPoints);
 
-  const splitsInJS = splitCounts.map((split, i) => {return { xMin: 500*i, xMax: (i+1)*500, iStart: splitCounts[i-1] || 0 }});
+  const splitsInJS = splitPoints.map((_, i) => {
+    return { xMin: 500 * i, xMax: (i + 1) * 500, iStart: splitPoints[i - 1] || 0, iEnd: splitPoints[i] };
+  });
 
-  const splitType = ti.types.struct({xMin: ti.f32, xMax: ti.f32, iStart: ti.i32});
-  const splits = ti.field( splitType, [splitCounts.length]) as ti.field;
+  const splitType = ti.types.struct({ xMin: ti.f32, xMax: ti.f32, iStart: ti.i32, iEnd: ti.i32 });
+  const splits = ti.field(splitType, [splitCounts.length]) as ti.field;
   splits.fromArray(splitsInJS);
   splits.toArray().then(console.log);
 
-  ti.addToKernelScope({splits,splitCounts})
+  ti.addToKernelScope({ splits, splitCounts });
 
   const sortKernel = ti.kernel(() => {
     const res = sortTriangles(vertices, M, splits, 2, resultsField);
   });
 
-  const stepSize = 50000;
-  let i = 0;
-  while (i < M) {
-    const start = performance.now();
-    await calculatePixels(i, stepSize);
-    console.log("time spent", performance.now() - start);
-    i += stepSize;
-  }
+  await sortKernel().then(() => console.log("sortKernel done"));
+
+  const acceleratedCalculatePixels = ti.kernel(() => {
+    for (let I of ti.ndrange(N, N)) {
+      let color = [ti.f32(0), 0, 0];
+
+      let selectedSplitIndex = 0
+      for (let i of ti.range(splitCounts.length)) {
+        if (I[0] > splits[i].xMin && I[0] < splits[i].xMax) {
+          selectedSplitIndex = i;
+        }
+      }
+
+      const split = splits[selectedSplitIndex];
+
+      for (let m of ti.range(split.iEnd - split.iStart)) {
+        let m2 = m+split.iStart;
+        const step = m2 * 3;
+        const v1 = vertices[step];
+        const v2 = vertices[step + 1];
+        const v3 = vertices[step + 2];
+        const res = rayIntersectsTriangle([I[0], I[1], 10000], [0, 0, -1], v1, v2, v3);
+        color = color + res.intersects * (1 - res.t / 10000) * 255;
+      }
+      pixels[I] = color;
+    }
+    return true;
+  });
+
+
+  const start = performance.now();
+  await acceleratedCalculatePixels();
+  console.log("time spent", performance.now() - start);
   await canvas.setImage(pixels).then(() => console.log("setImage done"));
 
   // requestAnimationFrame(frame);
