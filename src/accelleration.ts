@@ -1,6 +1,16 @@
 import * as ti from "taichi.js";
 import { rayIntersectsTriangle } from "./intersect";
 
+export const triangleTouchesBBox = ti.func((triangle, bbox) => {
+    const triangleMin = [ti.f32(1000000), ti.f32(1000000), ti.f32(1000000)];
+    const triangleMax = [ti.f32(-10000000), ti.f32(-10000000), ti.f32(-10000000)];
+    for (let i of ti.static(ti.range(3))) {
+        triangleMin[i] = ti.min(ti.min(triangle[0][i], triangle[1][i]), triangle[2][i]);
+        triangleMax[i] = ti.max(ti.max(triangle[0][i], triangle[1][i]), triangle[2][i]);
+    }
+    return triangleMin[0] <= bbox.xMax && triangleMax[0] >= bbox.xMin && triangleMin[1] <= bbox.yMax && triangleMax[1] >= bbox.yMin;
+})
+
 export const countTriangles = ti.func(
   (
     vertices: ti.Field<ti.Vector<ti.f32>>,
@@ -12,8 +22,10 @@ export const countTriangles = ti.func(
   ) => {
     for (let j of ti.range(binsLength)) {
         for (let i of ti.range(indicesLength)) {
-            const vertex = vertices[indices[i][0]];
-            if (vertex.x > bins[j].xMin && vertex.x < bins[j].xMax && vertex.y > bins[j].yMin && vertex.y < bins[j].yMax) {
+            const v1 = vertices[indices[i][0]];
+            const v2 = vertices[indices[i][1]];
+            const v3 = vertices[indices[i][2]];
+            if (triangleTouchesBBox([v1, v2, v3], bins[j])) {
                 binsOutput[j] += 1;
             } 
         }
@@ -33,8 +45,10 @@ export const sortTriangles = ti.func(
       let counter = 0;
       const iStart = bins[i].iStart;
       for (let j of ti.range(indicesLength)) {
-        const vertex = vertices[indices[j][0]];
-        if (vertex.x > bins[i].xMin && vertex.x < bins[i].xMax && vertex.y > bins[i].yMin && vertex.y < bins[i].yMax) {
+        const v1 = vertices[indices[j][0]];
+        const v2 = vertices[indices[j][1]];
+        const v3 = vertices[indices[j][2]];
+        if (triangleTouchesBBox([v1, v2, v3], bins[i])) {
           indicesindices[iStart + counter] = j;
           counter += 1;
         }

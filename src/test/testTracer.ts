@@ -1,6 +1,6 @@
 import * as ti from "taichi.js";
 import { rayIntersectsTriangle } from "../intersect";
-import { countTriangles, sortTriangles } from "../accelleration";
+import { countTriangles, sortTriangles, triangleTouchesBBox } from "../accelleration";
 
 const N = 1000;
 
@@ -21,7 +21,6 @@ export const initialize = async () => {
   const M = 100000;
   const vertices = ti.Vector.field(3, ti.f32, [M * 3]) as ti.field;
   const indices = ti.Vector.field(3, ti.i32, [M]) as ti.field;
-  const indicesindices = ti.field(ti.i32, [M]) as ti.field;
 
   ti.addToKernelScope({
     vertices,
@@ -32,7 +31,7 @@ export const initialize = async () => {
     rayIntersectsTriangle,
     countTriangles,
     sortTriangles,
-    indicesindices,
+    triangleTouchesBBox,
   });
 
   const initVertices = ti.kernel(() => {
@@ -49,10 +48,11 @@ export const initialize = async () => {
   });
   await initVertices().then(() => console.log("initVertices done"));
 
+  const binSize = 100;
   const newBinsInJS = [];
-  for (let i = 0; i < 1000; i += 100) {
-    for (let j = 0; j < 1000; j += 100) {
-      newBinsInJS.push({ xMin: i, xMax: i + 100,yMin: j, yMax: j+100, iStart: 0, iEnd: 0 });
+  for (let i = 0; i < 1000; i += binSize) {
+    for (let j = 0; j < 1000; j += binSize) {
+      newBinsInJS.push({ xMin: i, xMax: i + binSize,yMin: j, yMax: j+binSize, iStart: 0, iEnd: 0 });
     }
   }
   const binsInJS = newBinsInJS;
@@ -71,6 +71,7 @@ export const initialize = async () => {
   await countKernel();
   const trianglesPerBin = await binsOutput.toArray();
   console.log("trianglesPerBin", trianglesPerBin);
+  const totalIndicesIndices = trianglesPerBin.reduce((a, b) => a + b, 0);
   const splitPoints = trianglesPerBin.map((_, i) => trianglesPerBin.slice(0, i + 1).reduce((a, b) => a + b, 0));
 
   const binsWithIndexesInJS = splitPoints.map((_, i) => {
@@ -79,6 +80,10 @@ export const initialize = async () => {
 
   bins.fromArray(binsWithIndexesInJS);
   bins.toArray().then(console.log);
+
+  const indicesindices = ti.field(ti.i32, [totalIndicesIndices]) as ti.field;
+
+  ti.addToKernelScope({ indicesindices });
 
   const sortKernel = ti.kernel(() => {
     sortTriangles(vertices, indices, M, indicesindices, bins, binsLength);
