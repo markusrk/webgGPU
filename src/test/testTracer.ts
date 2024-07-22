@@ -25,7 +25,7 @@ export const initialize = async () => {
   triangle.fromArray(triangleInJs);
   const pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.field;
 
-  const M = 1000000;
+  const M = 100000;
   const vertices = ti.Vector.field(3, ti.f32, [M * 3]) as ti.field;
   const indices = ti.Vector.field(3, ti.i32, [M * 3]) as ti.field;
 
@@ -56,38 +56,34 @@ export const initialize = async () => {
   });
   await initVertices().then(() => console.log("initVertices done"));
 
-  const calculatePixels = ti.kernel({start: ti.i32, stepSize2: ti.i32},(start, stepSize2) => {
+  const calculatePixels = ti.kernel({ start: ti.i32, stepSize2: ti.i32 }, (start, stepSize2) => {
     for (let I of ti.ndrange(N, N)) {
       let isInside = pixels[I][0] > 0;
+      let color = [ti.f32(0), 0, 0];
       for (let m of ti.range(stepSize2)) {
         let m2 = m + start;
         const step = m2 * 3;
         const v1 = vertices[step];
         const v2 = vertices[step + 1];
         const v3 = vertices[step + 2];
-        const isInsideThisTriangle = rayIntersectsTriangle([I[0], I[1], 10000], [0, 0, -1], v1, v2, v3);
-        isInside = isInside || isInsideThisTriangle;
+        const res = rayIntersectsTriangle([I[0], I[1], 10000], [0, 0, -1], v1, v2, v3);
+        isInside = isInside || res.intersects;
+        color = color + isInside * ( 1- res.t/10000)*255;
       }
-      pixels[I] = [255 * isInside, 0, 0];
+      pixels[I] = color
     }
     return true;
   });
   const stepSize = 50000;
   let i = 0;
   while (i < M) {
-    await calculatePixels(i, stepSize).then(() => console.log("calculatePixels done"));
+    const start = performance.now();
+    await calculatePixels(i, stepSize);
+    console.log("time spent", performance.now() - start);
     i += stepSize;
   }
   await canvas.setImage(pixels).then(() => console.log("setImage done"));
 
-  const frame = async () => {
-    await calculatePixels();
-    await canvas.setImage(pixels);
-    console.log("rendered frame", i);
-
-    i < 100 && requestAnimationFrame(frame);
-    i++;
-  };
   // requestAnimationFrame(frame);
   testValue.toArray().then(console.log);
 
