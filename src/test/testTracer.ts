@@ -45,7 +45,7 @@ export const initialize = async () => {
       vertices[step] = [ti.random() * scale, ti.random() * scale, ti.random() * scale];
       vertices[step + 1] = vertices[step] + [ti.random() * smallScale, 0, 0];
       vertices[step + 2] = vertices[step] + [0, ti.random() * smallScale, 0];
-      indices[step] = [step, step + 1, step + 2];
+      indices[i] = [step, step + 1, step + 2];
     }
     return true;
   });
