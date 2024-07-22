@@ -46,9 +46,11 @@ export class Accellerator {
   verticesLength: ti.i32;
   indices: ti.Field<ti.Vector<ti.i32>>;
   indicesLength: ti.i32;
+  resultsField: ti.Field<ti.Vector<ti.f32>>;
 
   indicesIndices: ti.Field<ti.i32>;
   splits: ti.Field<any>;
+  splitsLength: ti.i32;
 
   sortTriangles: ti.func;
   countTriangles: ti.func;
@@ -58,33 +60,52 @@ export class Accellerator {
     this.indices = indices;
     this.verticesLength = vertices.dimensions[0]/3;
     this.indicesLength = indices.dimensions[0];
+    this.resultsField = ti.Vector.field(3, ti.f32, [this.verticesLength * 3]) as ti.field;
+    this.splitsLength = 2
 
-    this.countTriangles = ti.classKernel(
-      this,
-      (split: number) => {
-        let lCount = 0;
-        let yCount = 0;
 
-        for (let i of ti.range(this.verticesLength)) {
-          if (this.vertices[i].x > split) {
-            yCount += 1;
-          } else {
-            lCount += 1;
-          }
-        }
-        return [lCount, yCount];
-      }
-    );
   }
    init = async () => {
+    this.countTriangles = ti.classKernel(
+        this,
+        (split: number) => {
+          let lCount = 0;
+          let yCount = 0;
+  
+          for (let i of ti.range(this.verticesLength)) {
+            if (this.vertices[i].x > split) {
+              yCount += 1;
+            } else {
+              lCount += 1;
+            }
+          }
+          return [lCount, yCount];
+        }
+      );
+  
     const splitCounts = await this.countTriangles(500);
     const splitPoints = splitCounts.map((_, i) =>  splitCounts.slice(0, i+1).reduce((a, b) => a + b, 0) );
     const splitsInJS = splitPoints.map((_, i) => {
       return { xMin: 500 * i, xMax: (i + 1) * 500, iStart: splitPoints[i - 1] || 0, iEnd: splitPoints[i] };
     });
-    this.splits = ti.field(splitType, [splitCounts.length]) as ti.field;
+    this.splits = ti.field(splitType, this.splitsLength) as ti.field;
     this.splits.fromArray(splitsInJS);
-    this.splits.toArray().then(console.log);
+
+    this.sortTriangles = ti.classKernel(this,(
+    ) => {
+      for (let i of ti.range(this.splitsLength)) {
+        let counter = 0;
+        const iStart = this.splits[i].iStart;
+        for (let j of ti.range(this.verticesLength)) {
+          if (this.vertices[j].x > this.splits[i].xMin && this.vertices[j].x < this.splits[i].xMax) {
+            this.resultsField[iStart + counter] = this.vertices[j];
+            counter += 1;
+          }
+        }
+      }
+    });
+    await this.sortTriangles()
+    this.resultsField.toArray().then(console.log);
    }
 }
 
