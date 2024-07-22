@@ -45,7 +45,7 @@ export const rayIntersectsTriangle = ti.func(
       const cross1 = ti.cross(vec1, rayPointInPlane - p1);
       const cross2 = ti.cross(vec2, rayPointInPlane - p2);
       const cross3 = ti.cross(vec3, rayPointInPlane - p3);
-      intersects = ti.dot(cross1, cross2) >= 0 && ti.dot(cross2, cross3) >= 0;
+      intersects = ti.dot(cross1, cross2) >= 0 && ti.dot(cross2, cross3) >= 0 && t>0.00001;
     }
     return {intersects, intersectionPoint: rayPointInPlane, t, triangleNormal: normal};
   }
