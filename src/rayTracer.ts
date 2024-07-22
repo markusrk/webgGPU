@@ -4,6 +4,7 @@ import { intersectRayWithGeometry, rayIntersectsTriangle } from "./intersect";
 import { isPointInsidePolygon } from "./pointInPolygon";
 import { generateRay, generateRayFromNormal } from "./randomRays";
 import { getSpecificVCSScoreAtRay } from "./sky";
+import { Triangle } from "./example/geometryBuilder";
 
 const MAX_DAYLIGHT = 12.641899784120097;
 
@@ -99,7 +100,7 @@ export const preComputeSurroundings = async () => {
 
 export const rayTrace = async (
   polygonInJS: [number, number][],
-  wallsInJS: [[number, number, number], [number, number, number]][],
+  trianglesInJS: Triangle[],
   options = { materialReflectivity: 0.7, maxBounces: 6 }
 ) => {
   if (!isInitialized) {
@@ -113,17 +114,17 @@ export const rayTrace = async (
   polygon.fromArray(polygonInJS);
   if (thisToken !== currentToken) return;
 
-  const wallCount = wallsInJS.length;
-  const walls = ti.Vector.field(3, ti.f32, [wallCount, 3]);
+  const triangleCount = trianglesInJS.length;
+  const triangles = ti.Vector.field(3, ti.f32, [triangleCount, 3]);
 
   if (thisToken !== currentToken) return;
-  walls.fromArray(wallsInJS);
+  triangles.fromArray(trianglesInJS);
 
   if (thisToken !== currentToken) return;
 
   ti.addToKernelScope({
-    walls,
-    wallCount,
+    triangles,
+    triangleCount,
     polygon,
     polygonLength,
     options,
@@ -168,7 +169,7 @@ export const rayTrace = async (
       let nextNormal = [ti.f32(0.0), ti.f32(0.0), ti.f32(1.0)];
       for (let _ of ti.range(tracedRaysTarget)) {
         const ray = generateRayFromNormal(nextNormal);
-        let res = intersectRayWithGeometry(nextPosition, ray, walls, wallCount);
+        let res = intersectRayWithGeometry(nextPosition, ray, triangles, triangleCount);
         if (!res.isHit) {
           const scoreForAngle = getSpecificVCSScoreAtRay(ray);
           score = score + scoreForAngle * remainingLightFactor;

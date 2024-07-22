@@ -1,6 +1,6 @@
 import { add, Point, scalarMul, sub } from "../geometryTools";
 
-type Triangle = [Point, Point, Point];
+export type Triangle = [Point, Point, Point];
 
 const wallTrianglesFromPoints = (p1: Point, p2: Point): [Triangle, Triangle] => {
   const c1 = [p1[0], p1[1], p2[2]] as Point;
