@@ -92,7 +92,7 @@ export const initialize = async () => {
 
       let selectedSplitIndex = 0;
       for (let i of ti.range(binsLength)) {
-        if (I[0] > bins[i].xMin && I[0] < bins[i].xMax && I[1] > bins[i].yMin && I[1] < bins[i].yMax) {
+        if (I[0] >= bins[i].xMin && I[0] < bins[i].xMax && I[1] >= bins[i].yMin && I[1] < bins[i].yMax) {
           selectedSplitIndex = i;
         }
       }
