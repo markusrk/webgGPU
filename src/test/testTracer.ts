@@ -52,7 +52,7 @@ export const initialize = async () => {
   await initVertices().then(() => console.log("initVertices done"));
 
   const countKernel = ti.kernel(() => {
-    let splitCounts = countTriangles(vertices, M, 500);
+    let splitCounts = countTriangles(vertices, indices, M, 500);
     return splitCounts;
   });
 

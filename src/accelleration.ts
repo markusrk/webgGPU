@@ -2,18 +2,23 @@ import * as ti from "taichi.js";
 import { rayIntersectsTriangle } from "./intersect";
 
 export const countTriangles = ti.func(
-  (vertices: ti.Field<ti.Vector<ti.f32>>, verticesLength: number, split: number) => {
+  (
+    vertices: ti.Field<ti.Vector<ti.f32>>,
+    indices: ti.Field<ti.Vector<ti.i32>>,
+    indicesLength: number,
+    split: number
+  ) => {
     let lCount = 0;
-    let yCount = 0;
+    let rCount = 0;
 
-    for (let i of ti.range(verticesLength)) {
-      if (vertices[i].x > split) {
-        yCount += 1;
+    for (let i of ti.range(indicesLength)) {
+      if (vertices[indices[i][0]].x > split) {
+        rCount += 1;
       } else {
         lCount += 1;
       }
     }
-    return [lCount, yCount];
+    return [lCount, rCount];
   }
 );
 
@@ -24,7 +29,7 @@ export const sortTriangles = ti.func(
     indicesLength: number,
     indicesindices: ti.Field<ti.Vector<ti.i32>>,
     splits: ti.Field,
-    splitsLength: number,
+    splitsLength: number
   ) => {
     for (let i of ti.range(splitsLength)) {
       let counter = 0;
@@ -103,7 +108,7 @@ export class Accellerator {
     await this.sortTriangles();
     this.resultsField.toArray().then(console.log);
 
-    this.intersectWithGeometry = ti.classKernel(this, {ray: ti.types.vector(ti.f32,3)},(ray: ti.Vector<ti.f32>) => {
+    this.intersectWithGeometry = ti.classKernel(this, { ray: ti.types.vector(ti.f32, 3) }, (ray: ti.Vector<ti.f32>) => {
       let selectedSplitIndex = 0;
       for (let i of ti.range(splitCounts.length)) {
         if (ray[0] > this.splits[i].xMin && ray[0] < this.splits[i].xMax) {
