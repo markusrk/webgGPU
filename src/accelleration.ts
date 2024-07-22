@@ -77,8 +77,15 @@ export class Accellerator {
     );
   }
    init = async () => {
-    const counts = await this.countTriangles(500);
-    console.log("counts in init", counts);
-
+    const splitCounts = await this.countTriangles(500);
+    const splitPoints = splitCounts.map((_, i) =>  splitCounts.slice(0, i+1).reduce((a, b) => a + b, 0) );
+    const splitsInJS = splitPoints.map((_, i) => {
+      return { xMin: 500 * i, xMax: (i + 1) * 500, iStart: splitPoints[i - 1] || 0, iEnd: splitPoints[i] };
+    });
+    this.splits = ti.field(splitType, [splitCounts.length]) as ti.field;
+    this.splits.fromArray(splitsInJS);
+    this.splits.toArray().then(console.log);
    }
 }
+
+
