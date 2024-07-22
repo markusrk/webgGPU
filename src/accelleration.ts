@@ -42,6 +42,7 @@ const splitType = ti.types.struct({ xMin: ti.f32, xMax: ti.f32, iStart: ti.i32, 
 
 export class Accellerator {
   vertices: ti.Field<ti.Vector<ti.f32>>;
+  verticesLength: ti.i32;
   indices: ti.Field<ti.Vector<ti.i32>>;
 
   indicesIndices: ti.Field<ti.i32>;
@@ -51,11 +52,25 @@ export class Accellerator {
   countTriangles: ti.func;
 
   constructor(vertices: ti.Field<ti.Vector<ti.f32>>, indices: ti.Field<ti.Vector<ti.i32>>) {
-    this.indices = indices;
     this.vertices = vertices;
-    this.sortTriangles = sortTriangles;
-    this.countTriangles = countTriangles;
-  }
+    this.indices = indices;
+    this.verticesLength = vertices.dimensions[0];
 
-  init() {}
+    this.countTriangles = ti.classKernel(
+      this,
+      (split: number) => {
+        let lCount = 0;
+        let yCount = 0;
+
+        for (let i of ti.range(this.verticesLength)) {
+          if (this.vertices[i].x > split) {
+            yCount += 1;
+          } else {
+            lCount += 1;
+          }
+        }
+        return [lCount, yCount];
+      }
+    );
+  }
 }
