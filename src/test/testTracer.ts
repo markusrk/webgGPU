@@ -48,12 +48,23 @@ export const initialize = async () => {
     return true;
   });
   await initVertices().then(() => console.log("initVertices done"));
+
+  const binsInJS = [{xMin:0, xMax:500},{xMin:500, xMax:1000}]
+  const binsLength = binsInJS.length;
+  const binsType = ti.types.struct({ xMin: ti.f32, xMax: ti.f32 });
+  const bins = ti.field(binsType, [binsLength]) as ti.field;
+  bins.fromArray(binsInJS);
+
+  const binsOutput = ti.field(ti.i32, [binsLength]) as ti.field;
+
+  ti.addToKernelScope({ bins, binsLength,binsOutput });
   const countKernel = ti.kernel(() => {
-    let splitCounts = countTriangles(vertices, indices, M, 500);
-    return splitCounts;
+    countTriangles(vertices, indices, M, bins,binsLength,binsOutput);
   });
 
-  const splitCounts = await countKernel();
+  await countKernel();
+  const splitCounts = await binsOutput.toArray()
+  console.log("splitCounts", splitCounts);
   const splitPoints = splitCounts.map((_, i) => splitCounts.slice(0, i + 1).reduce((a, b) => a + b, 0));
 
   const splitsInJS = splitPoints.map((_, i) => {
