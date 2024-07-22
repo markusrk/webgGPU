@@ -51,11 +51,11 @@ export const initialize = async () => {
 
   const newBinsInJS = [];
   for (let i = 0; i < 1000; i += 100) {
-    newBinsInJS.push({ xMin: i, xMax: i + 100 });
+    newBinsInJS.push({ xMin: i, xMax: i + 100, iStart: 0, iEnd: 0 });
   }
   const binsInJS = newBinsInJS;
   const binsLength = binsInJS.length;
-  const binsType = ti.types.struct({ xMin: ti.f32, xMax: ti.f32 });
+  const binsType = ti.types.struct({ xMin: ti.f32, xMax: ti.f32, iStart: ti.i32, iEnd: ti.i32 });
   const bins = ti.field(binsType, [binsLength]) as ti.field;
   bins.fromArray(binsInJS);
 
@@ -67,23 +67,20 @@ export const initialize = async () => {
   });
 
   await countKernel();
-  const splitCounts = await binsOutput.toArray()
-  console.log("splitCounts", splitCounts);
-  const splitPoints = splitCounts.map((_, i) => splitCounts.slice(0, i + 1).reduce((a, b) => a + b, 0));
+  const trianglesPerBin = await binsOutput.toArray()
+  console.log("trianglesPerBin", trianglesPerBin);
+  const splitPoints = trianglesPerBin.map((_, i) => trianglesPerBin.slice(0, i + 1).reduce((a, b) => a + b, 0));
 
-  const splitsInJS = splitPoints.map((_, i) => {
+  const binsWithIndexesInJS = splitPoints.map((_, i) => {
     return { xMin: binsInJS[i].xMin, xMax: binsInJS[i].xMax, iStart: splitPoints[i - 1] || 0, iEnd: splitPoints[i] };
   });
 
-  const splitType = ti.types.struct({ xMin: ti.f32, xMax: ti.f32, iStart: ti.i32, iEnd: ti.i32 });
-  const splits = ti.field(splitType, [splitCounts.length]) as ti.field;
-  splits.fromArray(splitsInJS);
-  splits.toArray().then(console.log);
+  bins.fromArray(binsWithIndexesInJS);
+  bins.toArray().then(console.log);
 
-  ti.addToKernelScope({ splits, splitCounts });
 
   const sortKernel = ti.kernel(() => {
-    sortTriangles(vertices, indices, M, indicesindices, splits, binsLength);
+    sortTriangles(vertices, indices, M, indicesindices, bins, binsLength);
   });
 
   await sortKernel().then(() => console.log("sortKernel done"));
@@ -94,12 +91,12 @@ export const initialize = async () => {
 
       let selectedSplitIndex = 0
       for (let i of ti.range(binsLength)) {
-        if (I[0] > splits[i].xMin && I[0] < splits[i].xMax) {
+        if (I[0] > bins[i].xMin && I[0] < bins[i].xMax) {
           selectedSplitIndex = i;
         }
       }
 
-      const split = splits[selectedSplitIndex];
+      const split = bins[selectedSplitIndex];
 
       for (let m of ti.range(split.iEnd - split.iStart)) {
         let m2 = m + split.iStart;

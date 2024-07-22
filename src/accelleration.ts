@@ -26,15 +26,15 @@ export const sortTriangles = ti.func(
     indices: ti.Field<ti.Vector<ti.i32>>,
     indicesLength: number,
     indicesindices: ti.Field<ti.Vector<ti.i32>>,
-    splits: ti.Field,
+    bins: ti.Field,
     splitsLength: number
   ) => {
     for (let i of ti.range(splitsLength)) {
       let counter = 0;
-      const iStart = splits[i].iStart;
+      const iStart = bins[i].iStart;
       for (let j of ti.range(indicesLength)) {
         const vertex = vertices[indices[j][0]];
-        if (vertex.x > splits[i].xMin && vertex.x < splits[i].xMax) {
+        if (vertex.x > bins[i].xMin && vertex.x < bins[i].xMax) {
           indicesindices[iStart + counter] = j;
           counter += 1;
         }
