@@ -1,13 +1,5 @@
 import * as ti from "taichi.js";
 
-// class Accellerator {
-//     indicies: ti.Field<ti.Vector<ti.i32>>;
-//     vertices:  ti.Field<ti.Vector<ti.f32>>;
-//     constructor(vertices: ti.Field<ti.Vector<ti.f32>>, triangles: Triangle[]){ {
-//     this.triangles= triangles;
-//     }
-// }
-
 export const countTriangles = ti.func(
   (vertices: ti.Field<ti.Vector<ti.f32>>, verticesLength: number, split: number) => {
     let lCount = 0;
@@ -32,12 +24,12 @@ export const sortTriangles = ti.func(
     splitsLength: number,
     resultField: ti.Field<ti.Vector<ti.i32>>
   ) => {
-    for (let i of (ti.range(splitsLength))) {
+    for (let i of ti.range(splitsLength)) {
       let counter = 0;
       const iStart = splits[i].iStart;
       for (let j of ti.range(verticesLength)) {
-        resultField[iStart + counter] = vertices[j];
         if (vertices[j].x > splits[i].xMin && vertices[j].x < splits[i].xMax) {
+          resultField[iStart + counter] = vertices[j];
           counter += 1;
         }
       }
@@ -45,3 +37,25 @@ export const sortTriangles = ti.func(
     return resultField;
   }
 );
+
+const splitType = ti.types.struct({ xMin: ti.f32, xMax: ti.f32, iStart: ti.i32, iEnd: ti.i32 });
+
+export class Accellerator {
+  vertices: ti.Field<ti.Vector<ti.f32>>;
+  indices: ti.Field<ti.Vector<ti.i32>>;
+
+  indicesIndices: ti.Field<ti.i32>;
+  splits: ti.Field<any>;
+
+  sortTriangles: ti.func;
+  countTriangles: ti.func;
+
+  constructor(vertices: ti.Field<ti.Vector<ti.f32>>, indices: ti.Field<ti.Vector<ti.i32>>) {
+    this.indices = indices;
+    this.vertices = vertices;
+    this.sortTriangles = sortTriangles;
+    this.countTriangles = countTriangles;
+  }
+
+  init() {}
+}
