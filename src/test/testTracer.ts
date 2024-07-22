@@ -43,8 +43,8 @@ export const initialize = async () => {
     for (let i of ti.range(M)) {
       const step = i * 3;
       vertices[step] = [ti.random() * scale, ti.random() * scale, ti.random() * scale];
-      vertices[step + 1] = vertices[step] + [ti.random() * smallScale, 0, 0];
-      vertices[step + 2] = vertices[step] + [0, ti.random() * smallScale, 0];
+      vertices[step + 1] = vertices[step] + [ti.max(ti.random(), 0.1) * smallScale, 0, 0];
+      vertices[step + 2] = vertices[step] + [0, ti.max(ti.random(), 0.1) * smallScale, 0];
       indices[i] = [step, step + 1, step + 2];
     }
     return true;
