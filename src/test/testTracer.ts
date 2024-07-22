@@ -16,14 +16,7 @@ export const init = async (input_canvas) => {
 export const initialize = async () => {
   await ti.init();
 
-  let triangleInJs = [
-    [N * 0.1, N * 0.1, 0],
-    [N * 0.4, N * 0.1, 0],
-    [N * 0.1, N * 0.4, 0],
-  ] as [number, number, number][];
 
-  const triangle = ti.Vector.field(3, ti.f32, [3]) as ti.field;
-  triangle.fromArray(triangleInJs);
   const pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.field;
 
   const M = 50000;
@@ -31,7 +24,6 @@ export const initialize = async () => {
   const indices = ti.Vector.field(3, ti.i32, [M]) as ti.field;
   const indicesindices = ti.field(ti.i32, [M]) as ti.field;
 
-  let testValue = ti.Vector.field(3, ti.f32, [4]) as ti.field;
 
   ti.addToKernelScope({
     vertices,
@@ -40,8 +32,6 @@ export const initialize = async () => {
     N,
     pixels,
     rayIntersectsTriangle,
-    testValue,
-    triangle,
     countTriangles,
     sortTriangles,
     indicesindices,
@@ -122,7 +112,6 @@ export const initialize = async () => {
   await canvas.setImage(pixels).then(() => console.log("setImage done"));
 
   // requestAnimationFrame(frame);
-  testValue.toArray().then(console.log);
 
   return;
 };
