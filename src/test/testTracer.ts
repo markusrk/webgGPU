@@ -103,10 +103,10 @@ export const initialize = async () => {
 
       for (let m of ti.range(split.iEnd - split.iStart)) {
         let m2 = m+split.iStart;
-        const step = m2 * 3;
-        const v1 = vertices[step];
-        const v2 = vertices[step + 1];
-        const v3 = vertices[step + 2];
+        const indicesForTriangle = indices[indicesindices[m2]];
+        const v1 = vertices[indicesForTriangle[0]];
+        const v2 = vertices[indicesForTriangle[1]];
+        const v3 = vertices[indicesForTriangle[2]];
         const res = rayIntersectsTriangle([I[0], I[1], 10000], [0, 0, -1], v1, v2, v3);
         color = color + res.intersects * (1 - res.t / 10000) * 255;
       }
