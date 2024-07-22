@@ -28,8 +28,8 @@ export const initialize = async () => {
 
   const M = 50000;
   const vertices = ti.Vector.field(3, ti.f32, [M * 3]) as ti.field;
-  const indices = ti.Vector.field(3, ti.i32, [M * 3]) as ti.field;
-  const resultsField = ti.Vector.field(3, ti.f32, [M * 3]) as ti.field;
+  const indices = ti.Vector.field(3, ti.i32, [M]) as ti.field;
+  const indicesindices = ti.field(ti.i32, [M]) as ti.field;
 
   let testValue = ti.Vector.field(3, ti.f32, [4]) as ti.field;
 
@@ -44,7 +44,7 @@ export const initialize = async () => {
     triangle,
     countTriangles,
     sortTriangles,
-    resultsField,
+    indicesindices,
   });
 
   const initVertices = ti.kernel(() => {
@@ -82,8 +82,9 @@ export const initialize = async () => {
   ti.addToKernelScope({ splits, splitCounts });
 
   const sortKernel = ti.kernel(() => {
-    const res = sortTriangles(vertices, M, splits, 2, resultsField);
+    sortTriangles(vertices, indices, M, indicesindices, splits, 2);
   });
+
 
   await sortKernel().then(() => console.log("sortKernel done"));
 

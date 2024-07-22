@@ -20,22 +20,23 @@ export const countTriangles = ti.func(
 export const sortTriangles = ti.func(
   (
     vertices: ti.Field<ti.Vector<ti.f32>>,
-    verticesLength: number,
+    indices: ti.Field<ti.Vector<ti.i32>>,
+    indicesLength: number,
+    indicesindices: ti.Field<ti.Vector<ti.i32>>,
     splits: ti.Field,
     splitsLength: number,
-    resultField: ti.Field<ti.Vector<ti.i32>>
   ) => {
     for (let i of ti.range(splitsLength)) {
       let counter = 0;
       const iStart = splits[i].iStart;
-      for (let j of ti.range(verticesLength)) {
-        if (vertices[j].x > splits[i].xMin && vertices[j].x < splits[i].xMax) {
-          resultField[iStart + counter] = vertices[j];
+      for (let j of ti.range(indicesLength)) {
+        const vertex = vertices[indices[j][0]];
+        if (vertex.x > splits[i].xMin && vertex.x < splits[i].xMax) {
+          indicesindices[iStart + counter] = j;
           counter += 1;
         }
       }
     }
-    return resultField;
   }
 );
 
