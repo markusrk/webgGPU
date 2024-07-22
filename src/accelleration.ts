@@ -6,14 +6,14 @@ export const countTriangles = ti.func(
     vertices: ti.Field<ti.Vector<ti.f32>>,
     indices: ti.Field<ti.Vector<ti.i32>>,
     indicesLength: number,
-    bins: { xMin: ti.f32; xMax: ti.f32 }[],
+    bins: { xMin: ti.f32; xMax: ti.f32, yMin: ti.f32, yMax: ti.f32 }[],
     binsLength: number,
     binsOutput: ti.Field<ti.Vector<ti.i32>>
   ) => {
     for (let j of ti.range(binsLength)) {
         for (let i of ti.range(indicesLength)) {
             const vertex = vertices[indices[i][0]];
-            if (vertex.x > bins[j].xMin && vertex.x < bins[j].xMax) {
+            if (vertex.x > bins[j].xMin && vertex.x < bins[j].xMax && vertex.y > bins[j].yMin && vertex.y < bins[j].yMax) {
                 binsOutput[j] += 1;
             } 
         }
@@ -34,7 +34,7 @@ export const sortTriangles = ti.func(
       const iStart = bins[i].iStart;
       for (let j of ti.range(indicesLength)) {
         const vertex = vertices[indices[j][0]];
-        if (vertex.x > bins[i].xMin && vertex.x < bins[i].xMax) {
+        if (vertex.x > bins[i].xMin && vertex.x < bins[i].xMax && vertex.y > bins[i].yMin && vertex.y < bins[i].yMax) {
           indicesindices[iStart + counter] = j;
           counter += 1;
         }

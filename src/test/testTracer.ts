@@ -18,7 +18,7 @@ export const initialize = async () => {
 
   const pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.field;
 
-  const M = 50000;
+  const M = 100000;
   const vertices = ti.Vector.field(3, ti.f32, [M * 3]) as ti.field;
   const indices = ti.Vector.field(3, ti.i32, [M]) as ti.field;
   const indicesindices = ti.field(ti.i32, [M]) as ti.field;
@@ -51,33 +51,34 @@ export const initialize = async () => {
 
   const newBinsInJS = [];
   for (let i = 0; i < 1000; i += 100) {
-    newBinsInJS.push({ xMin: i, xMax: i + 100, iStart: 0, iEnd: 0 });
+    for (let j = 0; j < 1000; j += 100) {
+      newBinsInJS.push({ xMin: i, xMax: i + 100,yMin: j, yMax: j+100, iStart: 0, iEnd: 0 });
+    }
   }
   const binsInJS = newBinsInJS;
   const binsLength = binsInJS.length;
-  const binsType = ti.types.struct({ xMin: ti.f32, xMax: ti.f32, iStart: ti.i32, iEnd: ti.i32 });
+  const binsType = ti.types.struct({ xMin: ti.f32, xMax: ti.f32, yMin: ti.f32, yMax: ti.f32, iStart: ti.i32, iEnd: ti.i32 });
   const bins = ti.field(binsType, [binsLength]) as ti.field;
   bins.fromArray(binsInJS);
 
   const binsOutput = ti.field(ti.i32, [binsLength]) as ti.field;
 
-  ti.addToKernelScope({ bins, binsLength,binsOutput });
+  ti.addToKernelScope({ bins, binsLength, binsOutput });
   const countKernel = ti.kernel(() => {
-    countTriangles(vertices, indices, M, bins,binsLength,binsOutput);
+    countTriangles(vertices, indices, M, bins, binsLength, binsOutput);
   });
 
   await countKernel();
-  const trianglesPerBin = await binsOutput.toArray()
+  const trianglesPerBin = await binsOutput.toArray();
   console.log("trianglesPerBin", trianglesPerBin);
   const splitPoints = trianglesPerBin.map((_, i) => trianglesPerBin.slice(0, i + 1).reduce((a, b) => a + b, 0));
 
   const binsWithIndexesInJS = splitPoints.map((_, i) => {
-    return { xMin: binsInJS[i].xMin, xMax: binsInJS[i].xMax, iStart: splitPoints[i - 1] || 0, iEnd: splitPoints[i] };
+    return { ...binsInJS[i], iStart: splitPoints[i - 1] || 0, iEnd: splitPoints[i] };
   });
 
   bins.fromArray(binsWithIndexesInJS);
   bins.toArray().then(console.log);
-
 
   const sortKernel = ti.kernel(() => {
     sortTriangles(vertices, indices, M, indicesindices, bins, binsLength);
@@ -89,9 +90,9 @@ export const initialize = async () => {
     for (let I of ti.ndrange(N, N)) {
       let color = [ti.f32(0), 0, 0];
 
-      let selectedSplitIndex = 0
+      let selectedSplitIndex = 0;
       for (let i of ti.range(binsLength)) {
-        if (I[0] > bins[i].xMin && I[0] < bins[i].xMax) {
+        if (I[0] > bins[i].xMin && I[0] < bins[i].xMax && I[1] > bins[i].yMin && I[1] < bins[i].yMax) {
           selectedSplitIndex = i;
         }
       }
