@@ -22,6 +22,7 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       input: {
         main: 'index.html',
+        test: "test.html",
       },
       plugins: [
         taichi(),
