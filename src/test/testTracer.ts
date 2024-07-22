@@ -110,7 +110,26 @@ export const initialize = async () => {
     }
     return true;
   });
+  const calculatePixels = ti.kernel(() => {
+    for (let I of ti.ndrange(N, N)) {
+      let color = [ti.f32(0), 0, 0];
 
+      for (let m of ti.range(M + 1)) {
+        const m2 = m * 3;
+        const indicesForTriangle = indices[m];
+        const v1 = vertices[indicesForTriangle[0]];
+        const v2 = vertices[indicesForTriangle[1]];
+        const v3 = vertices[indicesForTriangle[2]];
+        // const v1 = vertices[m2 + 0];
+        // const v2 = vertices[m2 + 1];
+        // const v3 = vertices[m2 + 2];
+        const res = rayIntersectsTriangle([I[0], I[1], 10000], [0, 0, -1], v1, v2, v3);
+        color = color + res.intersects * 255;
+      }
+      pixels[I] = color;
+    }
+    return true;
+  });
 
   const start = performance.now();
   await acceleratedCalculatePixels();
