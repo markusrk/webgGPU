@@ -49,7 +49,11 @@ export const initialize = async () => {
   });
   await initVertices().then(() => console.log("initVertices done"));
 
-  const binsInJS = [{xMin:0, xMax:500},{xMin:500, xMax:1000}]
+  const newBinsInJS = [];
+  for (let i = 0; i < 1000; i += 100) {
+    newBinsInJS.push({ xMin: i, xMax: i + 100 });
+  }
+  const binsInJS = newBinsInJS;
   const binsLength = binsInJS.length;
   const binsType = ti.types.struct({ xMin: ti.f32, xMax: ti.f32 });
   const bins = ti.field(binsType, [binsLength]) as ti.field;
@@ -68,7 +72,7 @@ export const initialize = async () => {
   const splitPoints = splitCounts.map((_, i) => splitCounts.slice(0, i + 1).reduce((a, b) => a + b, 0));
 
   const splitsInJS = splitPoints.map((_, i) => {
-    return { xMin: 500 * i, xMax: (i + 1) * 500, iStart: splitPoints[i - 1] || 0, iEnd: splitPoints[i] };
+    return { xMin: binsInJS[i].xMin, xMax: binsInJS[i].xMax, iStart: splitPoints[i - 1] || 0, iEnd: splitPoints[i] };
   });
 
   const splitType = ti.types.struct({ xMin: ti.f32, xMax: ti.f32, iStart: ti.i32, iEnd: ti.i32 });
@@ -79,7 +83,7 @@ export const initialize = async () => {
   ti.addToKernelScope({ splits, splitCounts });
 
   const sortKernel = ti.kernel(() => {
-    sortTriangles(vertices, indices, M, indicesindices, splits, 2);
+    sortTriangles(vertices, indices, M, indicesindices, splits, binsLength);
   });
 
   await sortKernel().then(() => console.log("sortKernel done"));
@@ -89,7 +93,7 @@ export const initialize = async () => {
       let color = [ti.f32(0), 0, 0];
 
       let selectedSplitIndex = 0
-      for (let i of ti.range(splitCounts.length)) {
+      for (let i of ti.range(binsLength)) {
         if (I[0] > splits[i].xMin && I[0] < splits[i].xMax) {
           selectedSplitIndex = i;
         }
