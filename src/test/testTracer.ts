@@ -1,5 +1,5 @@
 import * as ti from "taichi.js";
-import { rayIntersectsTriangle } from "../intersect";
+import { intersectRayWithBin, rayIntersectsTriangle } from "../intersect";
 import { countTriangles, findMinMax, sortTriangles, triangleTouchesBBox } from "../acceleration/supportFunctions";
 import { sortAndBin } from "../acceleration/sortAndBin";
 import { initRandomVertices } from "./geometryInit";
@@ -26,6 +26,7 @@ export const initialize = async () => {
     triangleTouchesBBox,
     intersectRayWithAcceleratedGeometry,
     findMinMax,
+    intersectRayWithBin,
   });
 
   const pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.field;

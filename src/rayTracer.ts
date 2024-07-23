@@ -1,6 +1,6 @@
 import * as ti from "taichi.js";
 import { getColorForScore } from "./colors";
-import { intersectRayWithGeometry, rayIntersectsTriangle } from "./intersect";
+import { intersectRayWithBin, intersectRayWithGeometry, rayIntersectsTriangle } from "./intersect";
 import { isPointInsidePolygon } from "./pointInPolygon";
 import { generateRay, generateRayFromNormal } from "./randomRays";
 import { getSpecificVCSScoreAtRay } from "./sky";
@@ -79,7 +79,7 @@ export const preComputeSurroundings = async () => {
     console.log("Triggered preComputeSurroundings before initialization was done!!!");
   }
   // this line is meant to add all support functions to kernel scope. It is ugly, but i had trouble using add to kernel scope locally in each file.
-  ti.addToKernelScope({ rayIntersectsTriangle, countTriangles, sortTriangles, triangleTouchesBBox });
+  ti.addToKernelScope({ rayIntersectsTriangle, countTriangles, sortTriangles, triangleTouchesBBox, intersectRayWithBin });
 
   const M = 100;
   const startTime = performance.now();
