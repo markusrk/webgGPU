@@ -1,6 +1,11 @@
 import * as ti from "taichi.js";
 
-export const initVertices = () => {
+export const initRandomVertices = async (triangleCount: number) => {
+  const vertices = ti.Vector.field(3, ti.f32, [triangleCount * 3]) as ti.field;
+  const indices = ti.Vector.field(3, ti.i32, [triangleCount]) as ti.field;
+
+  ti.addToKernelScope({ vertices, indices });
+
   const kernel = ti.kernel(() => {
     const scale = 1000;
     const smallScale = 10;
@@ -12,6 +17,8 @@ export const initVertices = () => {
       indices[i] = [step, step + 1, step + 2];
     }
   });
+
   kernel();
-  return true;
+
+  return { vertices, indices };
 };

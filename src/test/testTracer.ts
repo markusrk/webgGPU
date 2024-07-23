@@ -2,7 +2,7 @@ import * as ti from "taichi.js";
 import { rayIntersectsTriangle } from "../intersect";
 import { countTriangles, sortTriangles, triangleTouchesBBox } from "../acceleration/supportFunctions";
 import { sortAndBin } from "../acceleration/sortAndBin";
-import { initVertices } from "./geometryInit";
+import { initRandomVertices } from "./geometryInit";
 
 const N = 1000;
 
@@ -13,29 +13,24 @@ export const init = async (input_canvas) => {
   htmlCanvas = input_canvas;
   await ti.init();
   canvas = new ti.Canvas(htmlCanvas);
-
 };
 
 export const initialize = async () => {
   await ti.init();
-  // this line is meant to add all support functions to kernel scope. It is ugly, but i had trouble using add to kernel scope locally in each file. 
+  // this line is meant to add all support functions to kernel scope. It is ugly, but i had trouble using add to kernel scope locally in each file.
   ti.addToKernelScope({ rayIntersectsTriangle, countTriangles, sortTriangles, triangleTouchesBBox });
 
   const pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.field;
 
   const M = 10000;
-  const vertices = ti.Vector.field(3, ti.f32, [M * 3]) as ti.field;
-  const indices = ti.Vector.field(3, ti.i32, [M]) as ti.field;
 
   ti.addToKernelScope({
-    vertices,
-    indices,
     M,
     N,
     pixels,
   });
 
-  await initVertices()//.then(() => console.log("initVertices done"));
+  const { vertices, indices } = await initRandomVertices(M);
   const { bins, binsLength, indicesindices } = await sortAndBin(vertices, indices, M);
 
   const acceleratedCalculatePixels = ti.kernel(() => {
