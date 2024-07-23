@@ -1,6 +1,14 @@
 import * as ti from "taichi.js";
 import { Point } from "../geometryTools";
 
+export type BinsTypeJS = {
+  xMin: number;
+  xMax: number;
+  yMin: number;
+  yMax: number;
+  iStart: number;
+  iEnd: number;
+};
 export const binsType = ti.types.struct({
   xMin: ti.f32,
   xMax: ti.f32,
@@ -16,7 +24,14 @@ const createBinsInJS = (binCount: number, min: Point, max: Point) => {
   const newBinsInJS = [];
   for (let i = 0; i < binCount; i += 1) {
     for (let j = 0; j < binCount; j += 1) {
-      newBinsInJS.push({ xMin: i*binSizeX, xMax: (i+1) * binSizeX, yMin: j*binSizeY, yMax: (j+1) * binSizeY, iStart: 0, iEnd: 0 });
+      newBinsInJS.push({
+        xMin: i * binSizeX,
+        xMax: (i + 1) * binSizeX,
+        yMin: j * binSizeY,
+        yMax: (j + 1) * binSizeY,
+        iStart: 0,
+        iEnd: 0,
+      });
     }
   }
   return newBinsInJS;
@@ -31,16 +46,16 @@ export const createBins = (binCount: number, min, max) => {
 };
 
 export const updateBins = async (bins, trianglesPerBin) => {
-    const binsInJS = await bins.toArray();
-    console.log("trianglesPerBin", trianglesPerBin);
-    const splitPoints = trianglesPerBin.map((_, i) => trianglesPerBin.slice(0, i + 1).reduce((a, b) => a + b, 0));
-  
-    const binsWithIndexesInJS = splitPoints.map((_, i) => {
-      return { ...binsInJS[i], iStart: splitPoints[i - 1] || 0, iEnd: splitPoints[i] };
-    });
-  
-    bins.fromArray(binsWithIndexesInJS);
-    bins.toArray().then(console.log);
+  const binsInJS = await bins.toArray();
+  console.log("trianglesPerBin", trianglesPerBin);
+  const splitPoints = trianglesPerBin.map((_, i) => trianglesPerBin.slice(0, i + 1).reduce((a, b) => a + b, 0));
 
-    return bins
-}
+  const binsWithIndexesInJS = splitPoints.map((_, i) => {
+    return { ...binsInJS[i], iStart: splitPoints[i - 1] || 0, iEnd: splitPoints[i] };
+  });
+
+  bins.fromArray(binsWithIndexesInJS);
+  bins.toArray().then(console.log);
+
+  return bins;
+};
