@@ -214,7 +214,9 @@ export const rayTrace = async (
   async function frame() {
     if (thisToken !== currentToken) return;
     i = i + 1;
+    const start = performance.now();
     rayTrace(tracesPerStep, false);
+    i%100 === 0 && console.log("raytrace", performance.now() - start);
     if (thisToken !== currentToken) return;
     updateTexture();
     if (thisToken !== currentToken) return;
