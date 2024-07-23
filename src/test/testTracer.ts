@@ -3,6 +3,7 @@ import { rayIntersectsTriangle } from "../intersect";
 import { countTriangles, sortTriangles, triangleTouchesBBox } from "../acceleration/supportFunctions";
 import { sortAndBin } from "../acceleration/sortAndBin";
 import { initRandomVertices } from "./geometryInit";
+import { intersectRayWithAcceleratedGeometry } from "../acceleration/intersect";
 
 const N = 1000;
 
@@ -18,7 +19,13 @@ export const init = async (input_canvas) => {
 export const initialize = async () => {
   await ti.init();
   // this line is meant to add all support functions to kernel scope. It is ugly, but i had trouble using add to kernel scope locally in each file.
-  ti.addToKernelScope({ rayIntersectsTriangle, countTriangles, sortTriangles, triangleTouchesBBox });
+  ti.addToKernelScope({
+    rayIntersectsTriangle,
+    countTriangles,
+    sortTriangles,
+    triangleTouchesBBox,
+    intersectRayWithAcceleratedGeometry,
+  });
 
   const pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.field;
 
@@ -36,25 +43,17 @@ export const initialize = async () => {
   const acceleratedCalculatePixels = ti.kernel(() => {
     for (let I of ti.ndrange(N, N)) {
       let color = [ti.f32(0), 0, 0];
+      const res = intersectRayWithAcceleratedGeometry(
+        [0, 0, -1],
+        [I[0], I[1], 10000],
+        bins,
+        binsLength,
+        vertices,
+        indices,
+        indicesindices
+      );
+      color = color + res.isHit * (1 - res.t / 10000) * 255;
 
-      let selectedSplitIndex = 0;
-      for (let i of ti.range(binsLength)) {
-        if (I[0] >= bins[i].xMin && I[0] < bins[i].xMax && I[1] >= bins[i].yMin && I[1] < bins[i].yMax) {
-          selectedSplitIndex = i;
-        }
-      }
-
-      const split = bins[selectedSplitIndex];
-
-      for (let m of ti.range(split.iEnd - split.iStart)) {
-        let m2 = m + split.iStart;
-        const indicesForTriangle = indices[indicesindices[m2]];
-        const v1 = vertices[indicesForTriangle[0]];
-        const v2 = vertices[indicesForTriangle[1]];
-        const v3 = vertices[indicesForTriangle[2]];
-        const res = rayIntersectsTriangle([I[0], I[1], 10000], [0, 0, -1], v1, v2, v3);
-        color = color + res.intersects * (1 - res.t / 10000) * 255;
-      }
       pixels[I] = color;
     }
     return true;
