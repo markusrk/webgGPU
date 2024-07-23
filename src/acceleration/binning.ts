@@ -27,8 +27,9 @@ const createBinsInJS = (binCount: number, min: Point, max: Point) => {
   const binSizeY = (max[1] - min[1]) / binCount;
   const newBinsInJS = [];
   for (let i = 0; i < binCount; i += 1) {
+    const binRow = [];
     for (let j = 0; j < binCount; j += 1) {
-      newBinsInJS.push({
+      binRow.push({
         xMin: i * binSizeX,
         xMax: (i + 1) * binSizeX,
         yMin: j * binSizeY,
@@ -39,26 +40,34 @@ const createBinsInJS = (binCount: number, min: Point, max: Point) => {
         iEnd: 0,
       });
     }
+    newBinsInJS.push(binRow);
   }
   return newBinsInJS;
 };
 
 export const createBins = (binCount: number, min, max) => {
   const binsInJS = createBinsInJS(binCount, min, max);
-  const binsLength = binsInJS.length;
-  const bins = ti.field(binsType, [binsLength]) as ti.field;
+  const binsLength = [binsInJS.length,binsInJS[0].length];
+  console.log("binsLength = ", binsLength)
+  console.log("binsInJS = ", binsInJS)
+  const bins = ti.field(binsType, binsLength) as ti.field;
   bins.fromArray(binsInJS);
   return { bins, binsLength };
 };
 
 export const updateBinsWithIndexes = async (bins, trianglesPerBin) => {
   const binsInJS = await bins.toArray();
-  const splitPoints = trianglesPerBin.map((_, i) => trianglesPerBin.slice(0, i + 1).reduce((a, b) => a + b, 0));
-
-  const binsWithIndexesInJS = splitPoints.map((_, i) => {
-    return { ...binsInJS[i], iStart: splitPoints[i - 1] || 0, iEnd: splitPoints[i] };
+  const binCount= binsInJS.length;
+  const flatTrianglesPerBin = trianglesPerBin.flat();
+  const flatSplitPoints = flatTrianglesPerBin.map((val,i) => flatTrianglesPerBin.slice(0,i+1).reduce((a,b) => a+b,0));
+  const flatBinsWithIndexesInJS = flatSplitPoints.map((_, i) => {
+    return { ...binsInJS.flat()[i], iStart: flatSplitPoints[i - 1] || 0, iEnd: flatSplitPoints[i] };
   });
-
+  
+  const binsWithIndexesInJS: number[][] = [];
+  for (let i = 0; i < flatBinsWithIndexesInJS.length; i += binCount) {
+    binsWithIndexesInJS.push(flatBinsWithIndexesInJS.slice(i, i + binCount));
+  }
   bins.fromArray(binsWithIndexesInJS);
   return bins;
 };

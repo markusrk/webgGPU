@@ -40,13 +40,13 @@ export const countTriangles = ti.func(
     binsLength: number,
     binsOutput: ti.Field<ti.Vector<ti.i32>>
   ) => {
-    for (let j of ti.range(binsLength)) {
+    for (let J of ti.ndrange(binsLength[0], binsLength[1])) {
       for (let i of ti.range(indicesLength)) {
         const v1 = vertices[indices[i][0]];
         const v2 = vertices[indices[i][1]];
         const v3 = vertices[indices[i][2]];
-        if (triangleTouchesBBox([v1, v2, v3], bins[j])) {
-          binsOutput[j] += 1;
+        if (triangleTouchesBBox([v1, v2, v3], bins[J])) {
+          binsOutput[J] += 1;
         }
       }
     }
@@ -60,26 +60,26 @@ export const sortTriangles = ti.func(
     indicesLength: number,
     indicesindices: ti.Field<ti.Vector<ti.i32>>,
     bins: ti.Field,
-    splitsLength: number
+    binsLength: [number,number]
   ) => {
-    for (let i of ti.range(splitsLength)) {
+    for (let I of ti.ndrange(binsLength[0],binsLength[1])) {
       let counter = 0;
       let minZ = 1000000
       let maxZ = -1000000 
-      const iStart = bins[i].iStart;
+      const iStart = bins[I].iStart;
       for (let j of ti.range(indicesLength)) {
         const v1 = vertices[indices[j][0]];
         const v2 = vertices[indices[j][1]];
         const v3 = vertices[indices[j][2]];
-        if (triangleTouchesBBox([v1, v2, v3], bins[i])) {
+        if (triangleTouchesBBox([v1, v2, v3], bins[I])) {
           indicesindices[iStart + counter] = j;
           counter += 1;
           minZ = ti.min(minZ, ti.min(v1[2], ti.min(v2[2], v3[2])))
           maxZ = ti.max(maxZ, ti.max(v1[2], ti.max(v2[2], v3[2])))
         }
       }
-      bins[i].zMin = minZ
-      bins[i].zMax = maxZ
+      bins[I].zMin = minZ
+      bins[I].zMax = maxZ
     }
   }
 );

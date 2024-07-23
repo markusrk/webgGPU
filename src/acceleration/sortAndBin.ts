@@ -1,6 +1,6 @@
 import * as ti from "taichi.js";
-import { countTriangles, findMinMax, sortTriangles } from "./supportFunctions";
 import { createBins, updateBinsWithIndexes } from "./binning";
+import { countTriangles, findMinMax, sortTriangles } from "./supportFunctions";
 
 export const sortAndBin = async (vertices, indices, indicesLength) => {
   ti.addToKernelScope({ indicesLength });
@@ -10,19 +10,20 @@ export const sortAndBin = async (vertices, indices, indicesLength) => {
   const { min, max } = await minMaxKernel();
   const { bins, binsLength } = createBins(10, min, max);
 
-  const binsOutput = ti.field(ti.i32, [binsLength]) as ti.field;
+  const countsPerBins = ti.field(ti.i32, binsLength) as ti.field;
 
-  ti.addToKernelScope({ bins, binsLength, binsOutput });
+  ti.addToKernelScope({ bins, binsLength, countsPerBins });
   const countKernel = ti.kernel(() => {
-    countTriangles(vertices, indices, indicesLength, bins, binsLength, binsOutput);
+    countTriangles(vertices, indices, indicesLength, bins, binsLength, countsPerBins);
   });
   let start = performance.now();
   await countKernel();
   console.log("countKernel", performance.now() - start);
-  const trianglesPerBin = await binsOutput.toArray();
+  const countsPerBinJS = await countsPerBins.toArray();
 
-  await updateBinsWithIndexes(bins, trianglesPerBin);
-  const indicesIndicesLength = trianglesPerBin.reduce((a, b) => a + b, 0);
+  await updateBinsWithIndexes(bins, countsPerBinJS);
+  bins.toArray().then(console.log);
+  const indicesIndicesLength = countsPerBinJS.flat().reduce((a, b) => a + b, 0);
   const indicesindices = ti.field(ti.i32, [indicesIndicesLength]) as ti.field;
 
   ti.addToKernelScope({ indicesindices });
@@ -32,8 +33,8 @@ export const sortAndBin = async (vertices, indices, indicesLength) => {
   });
 
   start = performance.now();
-  await sortKernel()
+  await sortKernel();
   console.log("sortKernel", performance.now() - start);
-  
+
   return { bins, binsLength, indicesindices, indicesIndicesLength };
 };
