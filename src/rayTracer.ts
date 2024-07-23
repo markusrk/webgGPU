@@ -6,7 +6,7 @@ import { generateRay, generateRayFromNormal } from "./randomRays";
 import { getSpecificVCSScoreAtRay } from "./sky";
 import { Triangle } from "./example/geometryBuilder";
 import { initRandomVertices } from "./test/geometryInit";
-import { sortAndBin } from "./acceleration/sortAndBin";
+import { aggregateBins, sortAndBin } from "./acceleration/sortAndBin";
 import { countTriangles, findMinMax, sortTriangles, triangleTouchesBBox } from "./acceleration/supportFunctions";
 import { loadPolygon, loadTriangle } from "./polygonAndTriangleLoaders";
 import { intersectRayWithAcceleratedGeometry } from "./acceleration/intersect";
@@ -64,6 +64,7 @@ export const init = async (input_canvas, resolution) => {
     intersectRayWithAcceleratedGeometry,
     findMinMax,
     gridIndexToMeter,
+    aggregateBins
   });
 
   const initilizeGrid = ti.kernel(() => {
@@ -83,13 +84,15 @@ export const preComputeSurroundings = async () => {
   // this line is meant to add all support functions to kernel scope. It is ugly, but i had trouble using add to kernel scope locally in each file.
   ti.addToKernelScope({ rayIntersectsTriangle, countTriangles, sortTriangles, triangleTouchesBBox, intersectRayWithBin });
 
-  const M = 1000;
+  const M = 100000;
   let startTime = performance.now();
   const { vertices, indices } = await initRandomVertices(M);
   console.log("init vertices", performance.now() - startTime);
 
   startTime = performance.now();
   const { bins, binsLength, indicesindices } = await sortAndBin(vertices, indices, M);
+  const {tlBins, tlBinsLength} = await aggregateBins(bins,5);
+  tlBins.toArray().then(console.log)
   console.log("sort and bin", performance.now() - startTime);
 };
 
@@ -160,7 +163,8 @@ export const rayTrace = async (
           binsLength,
           vertices,
           indices,
-          indicesindices
+          indicesindices,
+          tlBins, tlBinsLength
         );
         let resToUse = resBuilding
         if (resTheRest.isHit && resTheRest.t < resBuilding.t) {
@@ -209,7 +213,7 @@ export const rayTrace = async (
 
   let i = 0;
   const steps = 1000;
-  const tracesPerStep = 60;
+  const tracesPerStep = 20;
   async function frame() {
     if (thisToken !== currentToken) return;
     i = i + 1;
