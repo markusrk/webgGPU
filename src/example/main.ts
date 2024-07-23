@@ -3,25 +3,26 @@ import { init, preComputeSurroundings, rayTrace } from "../rayTracer";
 import { inwardsBoxFromAABBWithwindow } from "./geometryBuilder";
 const OFFSET = 0.01
 
-const resolution = 100;
+const sizeInMeters = 100;
+const resolution = 200
 let defaultWindowOptions = { windowSize: 50, windowSpacing: 200, windowHeight: 100 };
 let bounceOptions = { materialReflectivity: 0.9, maxBounces: 4 };
 let windowWidth = 0.1;
 let windowHeight = 0.1;
 
 let polygonInJS = [
-  [resolution * 0.1, resolution * 0.1],
-  [resolution * 0.1, resolution * 0.9],
-  [resolution * 0.9, resolution * 0.9],
-  [resolution * 0.9, resolution * 0.1],
-  [resolution * 0.1, resolution * 0.1],
+  [sizeInMeters * 0.1, sizeInMeters * 0.1],
+  [sizeInMeters * 0.1, sizeInMeters * 0.9],
+  [sizeInMeters * 0.9, sizeInMeters * 0.9],
+  [sizeInMeters * 0.9, sizeInMeters * 0.1],
+  [sizeInMeters * 0.1, sizeInMeters * 0.1],
 ] as [number, number][];
 
 let wallsInJs = [
   // ...boxFromAABBWithHoleInTheTop([resolution * 0.1, resolution * 0.1, 0], [resolution * 0.9, resolution * 0.9, 400]),
   ...inwardsBoxFromAABBWithwindow(
-    [resolution * (0.1-OFFSET), resolution * (0.1-OFFSET), 0],
-    [resolution * (0.9+OFFSET), resolution * (0.9+OFFSET), 1000],
+    [sizeInMeters * (0.1-OFFSET), sizeInMeters * (0.1-OFFSET), 0],
+    [sizeInMeters * (0.9+OFFSET), sizeInMeters * (0.9+OFFSET), 1000],
     windowWidth,
     windowHeight
   ),
@@ -33,8 +34,8 @@ document.getElementById("windowSize")!.addEventListener("input", (e) => {
   wallsInJs = [
     // ...boxFromAABBWithHoleInTheTop([resolution * 0.1, resolution * 0.1, 0], [resolution * 0.9, resolution * 0.9, 400]),
     ...inwardsBoxFromAABBWithwindow(
-      [resolution * (0.1-OFFSET), resolution * (0.1-OFFSET), 0],
-      [resolution * (0.9+OFFSET), resolution * (0.9+OFFSET), 1000],
+      [sizeInMeters * (0.1-OFFSET), sizeInMeters * (0.1-OFFSET), 0],
+      [sizeInMeters * (0.9+OFFSET), sizeInMeters * (0.9+OFFSET), 1000],
       windowWidth,
       windowHeight
     ),
@@ -47,8 +48,8 @@ document.getElementById("windowHeight")!.addEventListener("input", (e) => {
   wallsInJs = [
     // ...boxFromAABBWithHoleInTheTop([resolution * 0.1, resolution * 0.1, 0], [resolution * 0.9, resolution * 0.9, 400]),
     ...inwardsBoxFromAABBWithwindow(
-      [resolution * (0.1-OFFSET), resolution * (0.1-OFFSET), 0],
-      [resolution * (0.9+OFFSET), resolution * (0.9+OFFSET), 1000],
+      [sizeInMeters * (0.1-OFFSET), sizeInMeters * (0.1-OFFSET), 0],
+      [sizeInMeters * (0.9+OFFSET), sizeInMeters * (0.9+OFFSET), 1000],
       windowWidth,
       windowHeight
     ),
@@ -69,11 +70,11 @@ document.getElementById("maxBouncesInput")!.addEventListener("input", (e) => {
 
 const updateCoordinate = (x, y) => {
   polygonInJS = [
-    [resolution * 0.1, resolution * 0.1],
-    [x, resolution - y],
-    [resolution * 0.9, resolution * 0.9],
-    [resolution * 0.9, resolution * 0.1],
-    [resolution * 0.1, resolution * 0.1],
+    [sizeInMeters * 0.1, sizeInMeters * 0.1],
+    [x, sizeInMeters - y],
+    [sizeInMeters * 0.9, sizeInMeters * 0.9],
+    [sizeInMeters * 0.9, sizeInMeters * 0.1],
+    [sizeInMeters * 0.1, sizeInMeters * 0.1],
   ] as [number, number][];
   updateImage(polygonInJS, defaultWindowOptions);
 };

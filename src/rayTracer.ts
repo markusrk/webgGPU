@@ -42,6 +42,7 @@ export const init = async (input_canvas, resolution) => {
   scores = ti.field(ti.f32, [N, N]) as ti.Field;
   pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
   traceCount = ti.field(ti.i32, [N, N]) as ti.Field;
+  const gridIndexToMeter = 100/resolution;
 
   ti.addToKernelScope({
     points,
@@ -62,11 +63,12 @@ export const init = async (input_canvas, resolution) => {
     intersectRayWithGeometry,
     intersectRayWithAcceleratedGeometry,
     findMinMax,
+    gridIndexToMeter,
   });
 
   const initilizeGrid = ti.kernel(() => {
     for (let I of ti.ndrange(N, N)) {
-      points[I] = [I[0], I[1], 1];
+      points[I] = [I[0], I[1], 1]*gridIndexToMeter;
     }
   });
   initilizeGrid();
@@ -81,7 +83,7 @@ export const preComputeSurroundings = async () => {
   // this line is meant to add all support functions to kernel scope. It is ugly, but i had trouble using add to kernel scope locally in each file.
   ti.addToKernelScope({ rayIntersectsTriangle, countTriangles, sortTriangles, triangleTouchesBBox, intersectRayWithBin });
 
-  const M = 100;
+  const M = 1000;
   const startTime = performance.now();
   const { vertices, indices } = await initRandomVertices(M);
   vertices.toArray().then(console.log)
