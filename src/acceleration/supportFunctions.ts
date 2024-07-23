@@ -1,6 +1,19 @@
 import * as ti from "taichi.js";
 import { rayIntersectsTriangle } from "../intersect";
 
+
+export const findMinMax = ti.func((vertices: ti.Field<ti.Vector<ti.f32>>, verticesLength: number) => {
+  let min = [(1000000), (1000000), (1000000)];
+  let max = [(-10000000), (-10000000), (-10000000)];
+  for (let i of ti.range(verticesLength)) {
+    for (let j of ti.static(ti.range(3))) {
+      min[j] = ti.min(min[j], vertices[i][j]);
+      max[j] = ti.max(max[j], vertices[i][j]);
+    }
+  }
+  return { min, max };
+})
+
 export const triangleTouchesBBox = ti.func((triangle, bbox) => {
   const triangleMin = [ti.f32(1000000), ti.f32(1000000), ti.f32(1000000)];
   const triangleMax = [ti.f32(-10000000), ti.f32(-10000000), ti.f32(-10000000)];
@@ -15,6 +28,7 @@ export const triangleTouchesBBox = ti.func((triangle, bbox) => {
     triangleMax[1] >= bbox.yMin
   );
 });
+
 
 export const countTriangles = ti.func(
   (

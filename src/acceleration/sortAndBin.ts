@@ -1,15 +1,20 @@
 import * as ti from "taichi.js";
-import { countTriangles, sortTriangles } from "./supportFunctions";
+import { countTriangles, findMinMax, sortTriangles } from "./supportFunctions";
 import { createBins, updateBins } from "./binning";
 
 
 
 export const sortAndBin = async (vertices, indices, indicesLength) => {
-  const {bins, binsLength} = createBins(100);
+  ti.addToKernelScope({ indicesLength });
+  const minMaxKernel = ti.kernel(() => {
+    return findMinMax(vertices, indicesLength);
+  })
+  const { min, max } = await minMaxKernel();
+  const {bins, binsLength} = createBins(10,min,max);
 
   const binsOutput = ti.field(ti.i32, [binsLength]) as ti.field;
 
-  ti.addToKernelScope({ bins, binsLength, binsOutput, indicesLength });
+  ti.addToKernelScope({ bins, binsLength, binsOutput });
   const countKernel = ti.kernel(() => {
     countTriangles(vertices, indices, indicesLength, bins, binsLength, binsOutput);
   });

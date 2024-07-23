@@ -1,4 +1,5 @@
 import * as ti from "taichi.js";
+import { Point } from "../geometryTools";
 
 export const binsType = ti.types.struct({
   xMin: ti.f32,
@@ -9,18 +10,20 @@ export const binsType = ti.types.struct({
   iEnd: ti.i32,
 });
 
-const createBinsInJS = (binSize: number) => {
+const createBinsInJS = (binCount: number, min: Point, max: Point) => {
+  const binSizeX = (max[0] - min[0]) / binCount;
+  const binSizeY = (max[1] - min[1]) / binCount;
   const newBinsInJS = [];
-  for (let i = 0; i < 1000; i += binSize) {
-    for (let j = 0; j < 1000; j += binSize) {
-      newBinsInJS.push({ xMin: i, xMax: i + binSize, yMin: j, yMax: j + binSize, iStart: 0, iEnd: 0 });
+  for (let i = 0; i < binCount; i += 1) {
+    for (let j = 0; j < binCount; j += 1) {
+      newBinsInJS.push({ xMin: i*binSizeX, xMax: (i+1) * binSizeX, yMin: j*binSizeY, yMax: (j+1) * binSizeY, iStart: 0, iEnd: 0 });
     }
   }
   return newBinsInJS;
 };
 
-export const createBins = (binSize: number) => {
-  const binsInJS = createBinsInJS(binSize);
+export const createBins = (binCount: number, min, max) => {
+  const binsInJS = createBinsInJS(binCount, min, max);
   const binsLength = binsInJS.length;
   const bins = ti.field(binsType, [binsLength]) as ti.field;
   bins.fromArray(binsInJS);

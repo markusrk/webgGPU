@@ -7,7 +7,7 @@ import { getSpecificVCSScoreAtRay } from "./sky";
 import { Triangle } from "./example/geometryBuilder";
 import { initRandomVertices } from "./test/geometryInit";
 import { sortAndBin } from "./acceleration/sortAndBin";
-import { countTriangles, sortTriangles, triangleTouchesBBox } from "./acceleration/supportFunctions";
+import { countTriangles, findMinMax, sortTriangles, triangleTouchesBBox } from "./acceleration/supportFunctions";
 import { loadPolygon, loadTriangle } from "./polygonAndTriangleLoaders";
 import { intersectRayWithAcceleratedGeometry } from "./acceleration/intersect";
 
@@ -61,6 +61,7 @@ export const init = async (input_canvas, resolution) => {
     getSpecificVCSScoreAtRay,
     intersectRayWithGeometry,
     intersectRayWithAcceleratedGeometry,
+    findMinMax,
   });
 
   const initilizeGrid = ti.kernel(() => {
@@ -203,7 +204,6 @@ export const rayTrace = async (
       }
     }
   });
-  console.log(ti)
   if (thisToken !== currentToken) return;
   updateScoresMask();
   if (thisToken !== currentToken) return;
