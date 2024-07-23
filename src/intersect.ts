@@ -84,5 +84,6 @@ export const intersectRayWithBin = ti.func((origin: ti.Vector, ray: ti.Vector, b
 
   const tmin = ti.max(ti.max(ti.min(tx1, tx2), ti.min(ty1, ty2)),ti.min(tz1, tz2));
   const tmax = ti.min(ti.min(ti.max(tx1, tx2), ti.max(ty1, ty2)),ti.max(tz1, tz2));
-  return tmax >= tmin && tmax >= 0;
+  const isHit = tmax >= tmin && tmax >= 0;
+  return {isHit, tmax, tmin}
 });
