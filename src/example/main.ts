@@ -1,5 +1,5 @@
 import * as ti from "taichi.js";
-import { init, rayTrace } from "../rayTracer";
+import { init, preComputeSurroundings, rayTrace } from "../rayTracer";
 import { inwardsBoxFromAABBWithwindow } from "./geometryBuilder";
 const OFFSET = 0.01
 
@@ -93,6 +93,7 @@ htmlCanvas.height = resolution;
 
 const main = async () => {
   await init(htmlCanvas, resolution);
+  await preComputeSurroundings();
   rayTrace(polygonInJS, wallsInJs, bounceOptions);
 };
 main();
