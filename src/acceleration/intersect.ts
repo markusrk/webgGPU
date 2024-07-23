@@ -21,7 +21,7 @@ export const intersectRayWithAcceleratedGeometry = ti.func((ray, origin, bins, b
       const v1 = vertices[indicesForTriangle[0]];
       const v2 = vertices[indicesForTriangle[1]];
       const v3 = vertices[indicesForTriangle[2]];
-      const res = rayIntersectsTriangle([origin[0], origin[1], 10000], ray, v1, v2, v3);
+      const res = rayIntersectsTriangle([origin[0], origin[1], origin[2]], ray, v1, v2, v3);
       if (res.intersects && res.t < t && res.t > 0.00001) {
         isHit = true
         intersectionPoint = res.intersectionPoint
