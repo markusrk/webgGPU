@@ -3,9 +3,9 @@ import { init, preComputeSurroundings, rayTrace } from "../rayTracer";
 import { inwardsBoxFromAABBWithwindow } from "./geometryBuilder";
 const OFFSET = 0.01
 
-const resolution = 1000;
+const resolution = 100;
 let defaultWindowOptions = { windowSize: 50, windowSpacing: 200, windowHeight: 100 };
-let bounceOptions = { materialReflectivity: 0.1, maxBounces: 6 };
+let bounceOptions = { materialReflectivity: 0.5, maxBounces: 4 };
 let windowWidth = 0.1;
 let windowHeight = 0.1;
 
