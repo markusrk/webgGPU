@@ -217,8 +217,8 @@ export const rayTrace = async (
     if (thisToken !== currentToken) return;
     i = i + 1;
     const start = performance.now();
-    rayTrace(tracesPerStep, false);
-    i%100 === 0 && console.log("raytrace", performance.now() - start);
+    await rayTrace(tracesPerStep, false);
+    i%10 === 0 && console.log("raytrace", performance.now() - start);
     if (thisToken !== currentToken) return;
     updateTexture();
     if (thisToken !== currentToken) return;
