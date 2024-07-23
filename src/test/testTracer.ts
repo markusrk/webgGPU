@@ -2,6 +2,7 @@ import * as ti from "taichi.js";
 import { rayIntersectsTriangle } from "../intersect";
 import { countTriangles, sortTriangles, triangleTouchesBBox } from "../acceleration/supportFunctions";
 import { sortAndBin } from "../acceleration/sortAndBin";
+import { initVertices } from "./geometryInit";
 
 const N = 1000;
 
@@ -34,19 +35,7 @@ export const initialize = async () => {
     pixels,
   });
 
-  const initVertices = ti.kernel(() => {
-    const scale = 1000;
-    const smallScale = 10;
-    for (let i of ti.range(M)) {
-      const step = i * 3;
-      vertices[step] = [ti.random() * scale, ti.random() * scale, ti.random() * scale];
-      vertices[step + 1] = vertices[step] + [ti.max(ti.random(), 0.1) * smallScale, 0, 0];
-      vertices[step + 2] = vertices[step] + [0, ti.max(ti.random(), 0.1) * smallScale, 0];
-      indices[i] = [step, step + 1, step + 2];
-    }
-    return true;
-  });
-  await initVertices().then(() => console.log("initVertices done"));
+  await initVertices()//.then(() => console.log("initVertices done"));
   const { bins, binsLength, indicesindices } = await sortAndBin(vertices, indices, M);
 
   const acceleratedCalculatePixels = ti.kernel(() => {
