@@ -53,7 +53,6 @@ export const createBins = (binCount: number, min, max) => {
 
 export const updateBinsWithIndexes = async (bins, trianglesPerBin) => {
   const binsInJS = await bins.toArray();
-  console.log("trianglesPerBin", trianglesPerBin);
   const splitPoints = trianglesPerBin.map((_, i) => trianglesPerBin.slice(0, i + 1).reduce((a, b) => a + b, 0));
 
   const binsWithIndexesInJS = splitPoints.map((_, i) => {
@@ -61,7 +60,5 @@ export const updateBinsWithIndexes = async (bins, trianglesPerBin) => {
   });
 
   bins.fromArray(binsWithIndexesInJS);
-  bins.toArray().then(console.log);
-
   return bins;
 };

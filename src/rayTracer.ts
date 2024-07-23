@@ -84,16 +84,13 @@ export const preComputeSurroundings = async () => {
   ti.addToKernelScope({ rayIntersectsTriangle, countTriangles, sortTriangles, triangleTouchesBBox, intersectRayWithBin });
 
   const M = 1000;
-  const startTime = performance.now();
+  let startTime = performance.now();
   const { vertices, indices } = await initRandomVertices(M);
-  vertices.toArray().then(console.log)
   console.log("init vertices", performance.now() - startTime);
 
+  startTime = performance.now();
   const { bins, binsLength, indicesindices } = await sortAndBin(vertices, indices, M);
-  console.log("indicesIndices")
-  
-  indicesindices.toArray().then(console.log)
-  indices.toArray().then(console.log)
+  console.log("sort and bin", performance.now() - startTime);
 };
 
 export const rayTrace = async (

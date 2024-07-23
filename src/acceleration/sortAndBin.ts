@@ -16,10 +16,10 @@ export const sortAndBin = async (vertices, indices, indicesLength) => {
   const countKernel = ti.kernel(() => {
     countTriangles(vertices, indices, indicesLength, bins, binsLength, binsOutput);
   });
-
+  let start = performance.now();
   await countKernel();
+  console.log("countKernel", performance.now() - start);
   const trianglesPerBin = await binsOutput.toArray();
-  console.log("trianglesPerBin", trianglesPerBin);
 
   await updateBinsWithIndexes(bins, trianglesPerBin);
   const indicesIndicesLength = trianglesPerBin.reduce((a, b) => a + b, 0);
@@ -31,7 +31,9 @@ export const sortAndBin = async (vertices, indices, indicesLength) => {
     sortTriangles(vertices, indices, indicesLength, indicesindices, bins, binsLength);
   });
 
-  await sortKernel().then(() => console.log("sortKernel done"));
-
+  start = performance.now();
+  await sortKernel()
+  console.log("sortKernel", performance.now() - start);
+  
   return { bins, binsLength, indicesindices, indicesIndicesLength };
 };
