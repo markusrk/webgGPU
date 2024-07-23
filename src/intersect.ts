@@ -79,11 +79,10 @@ export const intersectRayWithBin = ti.func((origin: ti.Vector, ray: ti.Vector, b
   const ty1 = (bin.yMin - origin[1]) / ray[1];
   const ty2 = (bin.yMax - origin[1]) / ray[1];
 
-  // todo: implement z-axis as well
-  // const tz1 = (bin.zMin - origin[2]) / ray[2];
-  // const tz2 = (bin.zMax - origin[2]) / ray[2];
+  const tz1 = (bin.zMin - origin[2]) / ray[2];
+  const tz2 = (bin.zMax - origin[2]) / ray[2];
 
-  const tmin = ti.max(ti.min(tx1, tx2), ti.min(ty1, ty2));
-  const tmax = ti.min(ti.max(tx1, tx2), ti.max(ty1, ty2));
+  const tmin = ti.max(ti.max(ti.min(tx1, tx2), ti.min(ty1, ty2)),ti.min(tz1, tz2));
+  const tmax = ti.min(ti.min(ti.max(tx1, tx2), ti.max(ty1, ty2)),ti.max(tz1, tz2));
   return tmax >= tmin && tmax >= 0;
 });

@@ -6,6 +6,8 @@ export type BinsTypeJS = {
   xMax: number;
   yMin: number;
   yMax: number;
+  zMin: number;
+  zMax: number;
   iStart: number;
   iEnd: number;
 };
@@ -14,6 +16,8 @@ export const binsType = ti.types.struct({
   xMax: ti.f32,
   yMin: ti.f32,
   yMax: ti.f32,
+  zMin: ti.f32,
+  zMax: ti.f32,
   iStart: ti.i32,
   iEnd: ti.i32,
 });
@@ -29,6 +33,8 @@ const createBinsInJS = (binCount: number, min: Point, max: Point) => {
         xMax: (i + 1) * binSizeX,
         yMin: j * binSizeY,
         yMax: (j + 1) * binSizeY,
+        zMin: 100000,
+        zMax: -100000,
         iStart: 0,
         iEnd: 0,
       });
@@ -45,7 +51,7 @@ export const createBins = (binCount: number, min, max) => {
   return { bins, binsLength };
 };
 
-export const updateBins = async (bins, trianglesPerBin) => {
+export const updateBinsWithIndexes = async (bins, trianglesPerBin) => {
   const binsInJS = await bins.toArray();
   console.log("trianglesPerBin", trianglesPerBin);
   const splitPoints = trianglesPerBin.map((_, i) => trianglesPerBin.slice(0, i + 1).reduce((a, b) => a + b, 0));

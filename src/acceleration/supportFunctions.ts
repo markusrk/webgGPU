@@ -14,6 +14,7 @@ export const findMinMax = ti.func((vertices: ti.Field<ti.Vector<ti.f32>>, vertic
   return { min, max };
 })
 
+
 export const triangleTouchesBBox = ti.func((triangle, bbox) => {
   const triangleMin = [ti.f32(1000000), ti.f32(1000000), ti.f32(1000000)];
   const triangleMax = [ti.f32(-10000000), ti.f32(-10000000), ti.f32(-10000000)];
@@ -63,6 +64,8 @@ export const sortTriangles = ti.func(
   ) => {
     for (let i of ti.range(splitsLength)) {
       let counter = 0;
+      let minZ = 1000000
+      let maxZ = -1000000 
       const iStart = bins[i].iStart;
       for (let j of ti.range(indicesLength)) {
         const v1 = vertices[indices[j][0]];
@@ -71,8 +74,12 @@ export const sortTriangles = ti.func(
         if (triangleTouchesBBox([v1, v2, v3], bins[i])) {
           indicesindices[iStart + counter] = j;
           counter += 1;
+          minZ = ti.min(minZ, ti.min(v1[2], ti.min(v2[2], v3[2])))
+          maxZ = ti.max(maxZ, ti.max(v1[2], ti.max(v2[2], v3[2])))
         }
       }
+      bins[i].zMin = minZ
+      bins[i].zMax = maxZ
     }
   }
 );
