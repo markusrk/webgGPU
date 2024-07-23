@@ -9,6 +9,7 @@ import { initRandomVertices } from "./test/geometryInit";
 import { sortAndBin } from "./acceleration/sortAndBin";
 import { countTriangles, sortTriangles, triangleTouchesBBox } from "./acceleration/supportFunctions";
 import { loadPolygon, loadTriangle } from "./polygonAndTriangleLoaders";
+import { intersectRayWithAcceleratedGeometry } from "./acceleration/intersect";
 
 const MAX_DAYLIGHT = 12.641899784120097;
 
@@ -59,15 +60,15 @@ export const init = async (input_canvas, resolution) => {
     generateRay,
     getSpecificVCSScoreAtRay,
     intersectRayWithGeometry,
+    intersectRayWithAcceleratedGeometry,
   });
 
   const initilizeGrid = ti.kernel(() => {
     for (let I of ti.ndrange(N, N)) {
-      points[I] = [I[0], I[1], 10];
+      points[I] = [I[0], I[1], 1];
     }
   });
   initilizeGrid();
-
   colorPallet.fromArray(colorPalletJS);
   isInitialized = true;
 };
@@ -79,12 +80,17 @@ export const preComputeSurroundings = async () => {
   // this line is meant to add all support functions to kernel scope. It is ugly, but i had trouble using add to kernel scope locally in each file.
   ti.addToKernelScope({ rayIntersectsTriangle, countTriangles, sortTriangles, triangleTouchesBBox });
 
-  const M = 10000;
+  const M = 100;
   const startTime = performance.now();
   const { vertices, indices } = await initRandomVertices(M);
+  vertices.toArray().then(console.log)
   console.log("init vertices", performance.now() - startTime);
 
   const { bins, binsLength, indicesindices } = await sortAndBin(vertices, indices, M);
+  console.log("indicesIndices")
+  
+  indicesindices.toArray().then(console.log)
+  indices.toArray().then(console.log)
 };
 
 export const rayTrace = async (
@@ -135,11 +141,10 @@ export const rayTrace = async (
       }
     }
   });
-
   const rayTrace = ti.kernel((tracedRaysTarget: ti.i32, reset: Bool) => {
     const computeScoreForPoint = (position: ti.Vector) => {
       let score = ti.f32(0);
-      let tracedRays = 0;
+      let tracedRays = 1;
       let bounces = 0;
       let remainingLightFactor = ti.f32(1.0);
       const maxBounces = options.maxBounces;
@@ -148,6 +153,19 @@ export const rayTrace = async (
       for (let _ of ti.range(tracedRaysTarget)) {
         const ray = generateRayFromNormal(nextNormal);
         let resBuilding = intersectRayWithGeometry(nextPosition, ray, triangles, triangleLength);
+        let resTheRest = intersectRayWithAcceleratedGeometry(
+          [0,0,1],
+          position,
+          bins,
+          binsLength,
+          vertices,
+          indices,
+          indicesindices
+        );
+        let resToUse = resBuilding
+        if (resTheRest.isHit && resTheRest.t < resBuilding.t) {
+          resToUse = resTheRest
+        }
         if (!resBuilding.isHit) {
           const scoreForAngle = getSpecificVCSScoreAtRay(ray);
           score = score + scoreForAngle * remainingLightFactor;
@@ -166,11 +184,10 @@ export const rayTrace = async (
             // assign next position adjust for reflection factor and restart.
             nextPosition = resBuilding.intersectionPoint;
             nextNormal = resBuilding.triangleNormal;
-            remainingLightFactor = remainingLightFactor * options.materialReflectivity;
+            remainingLightFactor = remainingLightFactor *resToUse.reflectivity;
             bounces = bounces + 1;
           }
-        }
-      }
+      }}
       return { score, tracedRays };
     };
 
@@ -186,6 +203,7 @@ export const rayTrace = async (
       }
     }
   });
+  console.log(ti)
   if (thisToken !== currentToken) return;
   updateScoresMask();
   if (thisToken !== currentToken) return;
