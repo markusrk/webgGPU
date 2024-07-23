@@ -85,8 +85,6 @@ export const preComputeSurroundings = async () => {
   console.log("init vertices", performance.now() - startTime);
 
   const { bins, binsLength, indicesindices } = await sortAndBin(vertices, indices, M);
-
-
 };
 
 export const rayTrace = async (
@@ -100,10 +98,10 @@ export const rayTrace = async (
   const thisToken = Symbol();
   currentToken = thisToken;
 
-  const {polygon, polygonLength} = loadPolygon(polygonInJS);
+  const { polygon, polygonLength } = loadPolygon(polygonInJS);
   if (thisToken !== currentToken) return;
 
-  const {triangles, triangleLength} = loadTriangle(trianglesInJS);
+  const { triangles, triangleLength } = loadTriangle(trianglesInJS);
   if (thisToken !== currentToken) return;
 
   ti.addToKernelScope({
@@ -119,7 +117,7 @@ export const rayTrace = async (
   const updateTexture = ti.kernel(() => {
     for (let I of ti.ndrange(N, N)) {
       if (scoresMask[I] > 0) {
-// Test code to average pixel scores over areas
+        // Test code to average pixel scores over areas
         // let scoresAgg = ti.f32(0);
         // let traceCountAgg = ti.i32(0);
         // for (let J of ti.ndrange(2, 2)) {
@@ -137,7 +135,6 @@ export const rayTrace = async (
       }
     }
   });
-  
 
   const rayTrace = ti.kernel((tracedRaysTarget: ti.i32, reset: Bool) => {
     const computeScoreForPoint = (position: ti.Vector) => {
@@ -192,6 +189,7 @@ export const rayTrace = async (
   if (thisToken !== currentToken) return;
   updateScoresMask();
   if (thisToken !== currentToken) return;
+
   let i = 0;
   const steps = 1000;
   const tracesPerStep = 60;
