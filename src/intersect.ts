@@ -66,5 +66,5 @@ export const intersectRayWithGeometry = ti.func((origin: ti.Vector, ray: ti.Vect
       triangleNormal = res.triangleNormal
     }
   }
-  return {isHit, intersectionPoint, triangleNormal}
+  return {isHit, intersectionPoint, triangleNormal, t}
 })
