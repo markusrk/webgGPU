@@ -29,5 +29,5 @@ export const intersectRayWithAcceleratedGeometry = ti.func((ray, origin, bins, b
         triangleNormal = res.triangleNormal
       }
     }
-  return {isHit, intersectionPoint, triangleNormal, t}
+  return {isHit, intersectionPoint, triangleNormal, t ,reflectivity: ti.f32(0)}
 })
