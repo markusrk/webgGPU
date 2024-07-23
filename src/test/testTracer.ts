@@ -44,8 +44,8 @@ export const initialize = async () => {
     for (let I of ti.ndrange(N, N)) {
       let color = [ti.f32(0), 0, 0];
       const res = intersectRayWithAcceleratedGeometry(
-        [0, 0, -1],
-        [I[0], I[1], 10000],
+        [0, 0, 1],
+        [I[0], I[1], 1],
         bins,
         binsLength,
         vertices,
