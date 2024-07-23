@@ -5,6 +5,10 @@ import { isPointInsidePolygon } from "./pointInPolygon";
 import { generateRay, generateRayFromNormal } from "./randomRays";
 import { getSpecificVCSScoreAtRay } from "./sky";
 import { Triangle } from "./example/geometryBuilder";
+import { initRandomVertices } from "./test/geometryInit";
+import { sortAndBin } from "./acceleration/sortAndBin";
+import { countTriangles, sortTriangles, triangleTouchesBBox } from "./acceleration/supportFunctions";
+import { loadPolygon, loadTriangle } from "./polygonAndTriangleLoaders";
 
 const MAX_DAYLIGHT = 12.641899784120097;
 
@@ -72,30 +76,17 @@ export const preComputeSurroundings = async () => {
   if (!isInitialized) {
     console.log("Triggered preComputeSurroundings before initialization was done!!!");
   }
-  const m = 1000000;
-  const vertices = ti.Vector.field(3, ti.f32, [m]) as ti.field;
-  const indices = ti.Vector.field(3, ti.i32, [m]) as ti.field;
-  // const precomputedRayIntersections = ti.field(ti.i32, [N,N,VERTICAL_RESOLUTION*HORISONTAL_RESOLUTION/32 ]) as ti.field;
+  // this line is meant to add all support functions to kernel scope. It is ugly, but i had trouble using add to kernel scope locally in each file.
+  ti.addToKernelScope({ rayIntersectsTriangle, countTriangles, sortTriangles, triangleTouchesBBox });
 
-  ti.addToKernelScope({
-    vertices,
-    indices,
-    m,
-  });
+  const M = 10000;
+  const startTime = performance.now();
+  const { vertices, indices } = await initRandomVertices(M);
+  console.log("init vertices", performance.now() - startTime);
 
-  const initVertices = ti.kernel(() => {
-    const scale = 100;
-    for (let i of ti.range(m / 3)) {
-      const step = i * 3;
-      vertices[step] = [ti.random() * scale, ti.random() * scale, ti.random() * scale];
-      vertices[step + 1] = vertices[step] + [1, 1, 0];
-      vertices[step + 2] = vertices[step] + [0, 0, 1];
-      indices[step] = [step, step + 1, step + 2];
-    }
-  });
-  initVertices();
+  const { bins, binsLength, indicesindices } = await sortAndBin(vertices, indices, M);
 
-  return initVertices();
+
 };
 
 export const rayTrace = async (
@@ -109,22 +100,15 @@ export const rayTrace = async (
   const thisToken = Symbol();
   currentToken = thisToken;
 
-  const polygonLength = polygonInJS.length;
-  const polygon = ti.Vector.field(2, ti.f32, [polygonLength]) as ti.Field;
-  polygon.fromArray(polygonInJS);
+  const {polygon, polygonLength} = loadPolygon(polygonInJS);
   if (thisToken !== currentToken) return;
 
-  const triangleCount = trianglesInJS.length;
-  const triangles = ti.Vector.field(3, ti.f32, [triangleCount, 3]);
-
-  if (thisToken !== currentToken) return;
-  triangles.fromArray(trianglesInJS);
-
+  const {triangles, triangleLength} = loadTriangle(trianglesInJS);
   if (thisToken !== currentToken) return;
 
   ti.addToKernelScope({
     triangles,
-    triangleCount,
+    triangleLength,
     polygon,
     polygonLength,
     options,
@@ -157,6 +141,7 @@ export const rayTrace = async (
       }
     }
   });
+  
 
   const rayTrace = ti.kernel((tracedRaysTarget: ti.i32, reset: Bool) => {
     const computeScoreForPoint = (position: ti.Vector) => {
@@ -169,8 +154,8 @@ export const rayTrace = async (
       let nextNormal = [ti.f32(0.0), ti.f32(0.0), ti.f32(1.0)];
       for (let _ of ti.range(tracedRaysTarget)) {
         const ray = generateRayFromNormal(nextNormal);
-        let res = intersectRayWithGeometry(nextPosition, ray, triangles, triangleCount);
-        if (!res.isHit) {
+        let resBuilding = intersectRayWithGeometry(nextPosition, ray, triangles, triangleLength);
+        if (!resBuilding.isHit) {
           const scoreForAngle = getSpecificVCSScoreAtRay(ray);
           score = score + scoreForAngle * remainingLightFactor;
           tracedRays = tracedRays + 1;
@@ -186,8 +171,8 @@ export const rayTrace = async (
             tracedRays = tracedRays + 1;
           } else {
             // assign next position adjust for reflection factor and restart.
-            nextPosition = res.intersectionPoint;
-            nextNormal = res.triangleNormal;
+            nextPosition = resBuilding.intersectionPoint;
+            nextNormal = resBuilding.triangleNormal;
             remainingLightFactor = remainingLightFactor * options.materialReflectivity;
             bounces = bounces + 1;
           }
