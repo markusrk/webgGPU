@@ -12,10 +12,13 @@ export const init = async (input_canvas) => {
   htmlCanvas = input_canvas;
   await ti.init();
   canvas = new ti.Canvas(htmlCanvas);
+
 };
 
 export const initialize = async () => {
   await ti.init();
+  // this line is meant to add all support functions to kernel scope. It is ugly, but i had trouble using add to kernel scope locally in each file. 
+  ti.addToKernelScope({ rayIntersectsTriangle, countTriangles, sortTriangles, triangleTouchesBBox });
 
   const pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.field;
 
@@ -29,10 +32,6 @@ export const initialize = async () => {
     M,
     N,
     pixels,
-    rayIntersectsTriangle,
-    countTriangles,
-    sortTriangles,
-    triangleTouchesBBox,
   });
 
   const initVertices = ti.kernel(() => {
@@ -48,7 +47,7 @@ export const initialize = async () => {
     return true;
   });
   await initVertices().then(() => console.log("initVertices done"));
-  const { bins, binsLength, indicesindices } = await sortAndBin(vertices, indices,M);
+  const { bins, binsLength, indicesindices } = await sortAndBin(vertices, indices, M);
 
   const acceleratedCalculatePixels = ti.kernel(() => {
     for (let I of ti.ndrange(N, N)) {
