@@ -15,6 +15,6 @@ export const loadTriangle = (trianglesInJS: Triangle[]) => {
   const triangles = ti.Vector.field(3, ti.f32, [triangleLength, 3]);
 
   triangles.fromArray(trianglesInJS);
-  ti.addToKernelScope({ triangles });
+  ti.addToKernelScope({ triangles, triangleLength });
   return { triangles, triangleLength };
 };

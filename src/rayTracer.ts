@@ -107,10 +107,6 @@ export const rayTrace = async (
   if (thisToken !== currentToken) return;
 
   ti.addToKernelScope({
-    triangles,
-    triangleLength,
-    polygon,
-    polygonLength,
     options,
   });
 
