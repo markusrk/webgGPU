@@ -19,7 +19,7 @@ export const initialize = async () => {
 
   const pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.field;
 
-  const M = 100000;
+  const M = 10000;
   const vertices = ti.Vector.field(3, ti.f32, [M * 3]) as ti.field;
   const indices = ti.Vector.field(3, ti.i32, [M]) as ti.field;
 
@@ -48,7 +48,7 @@ export const initialize = async () => {
     return true;
   });
   await initVertices().then(() => console.log("initVertices done"));
-  const { bins, binsLength, indicesindices } = await sortAndBin(vertices, indices);
+  const { bins, binsLength, indicesindices } = await sortAndBin(vertices, indices,M);
 
   const acceleratedCalculatePixels = ti.kernel(() => {
     for (let I of ti.ndrange(N, N)) {
@@ -99,6 +99,7 @@ export const initialize = async () => {
 
   const start = performance.now();
   await acceleratedCalculatePixels();
+  // await calculatePixels()
   console.log("time spent", performance.now() - start);
   await canvas.setImage(pixels).then(() => console.log("setImage done"));
 
