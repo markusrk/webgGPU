@@ -84,7 +84,7 @@ export const preComputeSurroundings = async () => {
   // this line is meant to add all support functions to kernel scope. It is ugly, but i had trouble using add to kernel scope locally in each file.
   ti.addToKernelScope({ rayIntersectsTriangle, countTriangles, sortTriangles, triangleTouchesBBox, intersectRayWithBin });
 
-  const M = 100000;
+  const M = 1000;
   let startTime = performance.now();
   const { vertices, indices } = await initRandomVertices(M);
   console.log("init vertices", performance.now() - startTime);
@@ -212,14 +212,14 @@ export const rayTrace = async (
   if (thisToken !== currentToken) return;
 
   let i = 0;
-  const steps = 1000;
-  const tracesPerStep = 20;
+  const steps = 2000;
+  const tracesPerStep = 30;
   async function frame() {
     if (thisToken !== currentToken) return;
     i = i + 1;
     const start = performance.now();
     await rayTrace(tracesPerStep, false);
-    i%10 === 0 && console.log("raytrace", performance.now() - start);
+    // i%10 === 1  && console.log("raytrace", performance.now() - start);
     if (thisToken !== currentToken) return;
     updateTexture();
     if (thisToken !== currentToken) return;

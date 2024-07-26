@@ -1,10 +1,10 @@
 import * as ti from "taichi.js";
 import { init, preComputeSurroundings, rayTrace } from "../rayTracer";
 import { inwardsBoxFromAABBWithwindow } from "./geometryBuilder";
-const OFFSET = 0.01
+const OFFSET = 0.01;
 
 const sizeInMeters = 100;
-const resolution = 200
+const resolution = 600;
 let defaultWindowOptions = { windowSize: 50, windowSpacing: 200, windowHeight: 100 };
 let bounceOptions = { materialReflectivity: 0.9, maxBounces: 4 };
 let windowWidth = 0.1;
@@ -18,15 +18,37 @@ let polygonInJS = [
   [sizeInMeters * 0.1, sizeInMeters * 0.1],
 ] as [number, number][];
 
+const updatePolygon = (p: { x: number; y: number }) => {
+  polygonInJS = [
+    [sizeInMeters * 0.1, sizeInMeters * 0.1],
+    [sizeInMeters * 0.1, sizeInMeters * p.y/resolution],
+    [sizeInMeters * p.x/resolution, sizeInMeters * p.y/resolution],
+    [sizeInMeters * p.x/resolution, sizeInMeters * 0.1],
+    [sizeInMeters * 0.1, sizeInMeters * 0.1],
+  ];
+  updateImage(polygonInJS, wallsInJs, bounceOptions);
+};
+
 let wallsInJs = [
   // ...boxFromAABBWithHoleInTheTop([resolution * 0.1, resolution * 0.1, 0], [resolution * 0.9, resolution * 0.9, 400]),
   ...inwardsBoxFromAABBWithwindow(
-    [sizeInMeters * (0.1-OFFSET), sizeInMeters * (0.1-OFFSET), 0],
-    [sizeInMeters * (0.9+OFFSET), sizeInMeters * (0.9+OFFSET), 1000],
+    [sizeInMeters * (0.1 - OFFSET), sizeInMeters * (0.1 - OFFSET), 0],
+    [sizeInMeters * (0.9 + OFFSET), sizeInMeters * (0.9 + OFFSET), 1000],
     windowWidth,
     windowHeight
   ),
 ];
+
+const updateWalls = (p: { x: number; y: number }, windowOptions?: any) => {
+  wallsInJs = [
+    ...inwardsBoxFromAABBWithwindow(
+      [sizeInMeters * (0.1 - OFFSET), sizeInMeters * (0.1 - OFFSET), 0],
+      [sizeInMeters * (p.x/resolution + OFFSET), sizeInMeters * (p.y/resolution + OFFSET), 1000],
+      windowWidth,
+      windowHeight
+    ),
+  ];
+};
 
 document.getElementById("windowSize")!.addEventListener("input", (e) => {
   const v = (e.target as HTMLInputElement).value;
@@ -34,8 +56,8 @@ document.getElementById("windowSize")!.addEventListener("input", (e) => {
   wallsInJs = [
     // ...boxFromAABBWithHoleInTheTop([resolution * 0.1, resolution * 0.1, 0], [resolution * 0.9, resolution * 0.9, 400]),
     ...inwardsBoxFromAABBWithwindow(
-      [sizeInMeters * (0.1-OFFSET), sizeInMeters * (0.1-OFFSET), 0],
-      [sizeInMeters * (0.9+OFFSET), sizeInMeters * (0.9+OFFSET), 1000],
+      [sizeInMeters * (0.1 - OFFSET), sizeInMeters * (0.1 - OFFSET), 0],
+      [sizeInMeters * (0.9 + OFFSET), sizeInMeters * (0.9 + OFFSET), 1000],
       windowWidth,
       windowHeight
     ),
@@ -48,8 +70,8 @@ document.getElementById("windowHeight")!.addEventListener("input", (e) => {
   wallsInJs = [
     // ...boxFromAABBWithHoleInTheTop([resolution * 0.1, resolution * 0.1, 0], [resolution * 0.9, resolution * 0.9, 400]),
     ...inwardsBoxFromAABBWithwindow(
-      [sizeInMeters * (0.1-OFFSET), sizeInMeters * (0.1-OFFSET), 0],
-      [sizeInMeters * (0.9+OFFSET), sizeInMeters * (0.9+OFFSET), 1000],
+      [sizeInMeters * (0.1 - OFFSET), sizeInMeters * (0.1 - OFFSET), 0],
+      [sizeInMeters * (0.9 + OFFSET), sizeInMeters * (0.9 + OFFSET), 1000],
       windowWidth,
       windowHeight
     ),
@@ -69,14 +91,11 @@ document.getElementById("maxBouncesInput")!.addEventListener("input", (e) => {
 });
 
 const updateCoordinate = (x, y) => {
-  polygonInJS = [
-    [sizeInMeters * 0.1, sizeInMeters * 0.1],
-    [x, sizeInMeters - y],
-    [sizeInMeters * 0.9, sizeInMeters * 0.9],
-    [sizeInMeters * 0.9, sizeInMeters * 0.1],
-    [sizeInMeters * 0.1, sizeInMeters * 0.1],
-  ] as [number, number][];
-  updateImage(polygonInJS, defaultWindowOptions);
+  console.log("x = ", x);
+  console.log("y = ", y);
+  updateWalls({ x, y: resolution - y });
+  updatePolygon({ x, y: resolution - y });
+  updateImage(polygonInJS, wallsInJs, bounceOptions);
 };
 
 const updateImage = (polygonInJS, wallsInJS, bounceOptions) => {
