@@ -7,13 +7,14 @@ export const initRandomVertices = async (triangleCount: number) => {
   ti.addToKernelScope({ vertices, indices, triangleCount });
 
   const kernel = ti.kernel(() => {
-    const scale = 100;
+    const scale = 1000;
+    const scaleZ = 50
     const smallScale = 10;
     for (let i of ti.range(triangleCount)) {
       const step = i * 3;
-      vertices[step] = [ti.random() * scale, ti.random() * scale, 5];
-      vertices[step + 2] = vertices[step] + [ti.max(ti.random(), 0.1) * smallScale, 0, 0];
-      vertices[step + 1] = vertices[step] + [0, ti.max(ti.random(), 0.1) * smallScale, 0];
+      vertices[step] = [ti.random() * scale, ti.random() * scale, ti.random() * scaleZ];
+      vertices[step + 2] = vertices[step] + [(ti.random()-0.5) * smallScale, 0, (ti.random()-0.5) * smallScale];
+      vertices[step + 1] = vertices[step] + [0, (ti.random()-0.5) * smallScale, (ti.random()-0.5) * smallScale];
       indices[i] = [step, step + 1, step + 2];
     }
   });
