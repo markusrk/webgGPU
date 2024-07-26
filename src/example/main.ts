@@ -91,8 +91,6 @@ document.getElementById("maxBouncesInput")!.addEventListener("input", (e) => {
 });
 
 const updateCoordinate = (x, y) => {
-  console.log("x = ", x);
-  console.log("y = ", y);
   updateWalls({ x, y: resolution - y });
   updatePolygon({ x, y: resolution - y });
   updateImage(polygonInJS, wallsInJs, bounceOptions);
