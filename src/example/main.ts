@@ -114,6 +114,12 @@ function debounce(func: Function, delay: number) {
   };
 }
 
+const fixDotPosition = () => {
+  const dragElement = document.getElementById("dragElement")!;
+  dragElement.style.left = resolution * 0.9 + "px";
+  dragElement.style.top = resolution * 0.1 + "px";
+};
+fixDotPosition();
 
 // This is bottom part is the code that matters. The rest is scaffolding.
 const htmlCanvas = document.getElementById("result_canvas")! as ti.Canvas;
