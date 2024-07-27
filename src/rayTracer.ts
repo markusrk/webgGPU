@@ -8,14 +8,15 @@ import { Triangle } from "./example/geometryBuilder";
 import { initRandomVertices } from "./test/geometryInit";
 import { aggregateBins, sortAndBin } from "./acceleration/sortAndBin";
 import { countTriangles, findMinMax, sortTriangles, triangleTouchesBBox } from "./acceleration/supportFunctions";
-import { loadPolygon, loadTriangle } from "./polygonAndTriangleLoaders";
+import { initPolygon, initTriangle, loadPolygon, loadTriangle } from "./polygonAndTriangleLoaders";
 import { intersectRayWithAcceleratedGeometry } from "./acceleration/intersect";
 
 const MAX_DAYLIGHT = 12.641899784120097;
 
-let currentToken = Symbol(); // Step 1: Initialize a unique symbol as the cancellation token
+let currentToken = undefined; // Step 1: Initialize a unique symbol as the cancellation token
 
-let N, points, scoresMask, scores, pixels, traceCount;
+let N, points, scoresMask, scores, pixels, traceCount, traceKernel, updateTexture, updateScoresMask;
+let options = { materialReflectivity: 0.7, maxBounces: 6 };
 let isInitialized = false;
 
 let htmlCanvas;
@@ -42,7 +43,7 @@ export const init = async (input_canvas, resolution) => {
   scores = ti.field(ti.f32, [N, N]) as ti.Field;
   pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
   traceCount = ti.field(ti.i32, [N, N]) as ti.Field;
-  const gridIndexToMeter = 100/resolution;
+  const gridIndexToMeter = 100 / resolution;
 
   ti.addToKernelScope({
     points,
@@ -64,25 +65,32 @@ export const init = async (input_canvas, resolution) => {
     intersectRayWithAcceleratedGeometry,
     findMinMax,
     gridIndexToMeter,
-    aggregateBins
+    aggregateBins,
+    options,
+    countTriangles,
+    sortTriangles,
+    triangleTouchesBBox,
+    intersectRayWithBin,
   });
 
   const initilizeGrid = ti.kernel(() => {
     for (let I of ti.ndrange(N, N)) {
-      points[I] = [I[0], I[1], 1]*gridIndexToMeter;
+      points[I] = [I[0], I[1], 1] * gridIndexToMeter;
     }
   });
   initilizeGrid();
   colorPallet.fromArray(colorPalletJS);
+
+  await initPolygon();
+  await initTriangle();
+
   isInitialized = true;
 };
 
-export const preComputeSurroundings = async () => {
+export const initializeSurroundings = async () => {
   if (!isInitialized) {
     console.log("Triggered preComputeSurroundings before initialization was done!!!");
   }
-  // this line is meant to add all support functions to kernel scope. It is ugly, but i had trouble using add to kernel scope locally in each file.
-  ti.addToKernelScope({ rayIntersectsTriangle, countTriangles, sortTriangles, triangleTouchesBBox, intersectRayWithBin });
 
   const M = 1000;
   let startTime = performance.now();
@@ -91,60 +99,41 @@ export const preComputeSurroundings = async () => {
 
   startTime = performance.now();
   const { bins, binsLength, indicesindices } = await sortAndBin(vertices, indices, M);
-  const {tlBins, tlBinsLength} = await aggregateBins(bins,5);
-  tlBins.toArray().then(console.log)
+  const { tlBins, tlBinsLength } = await aggregateBins(bins, 5);
   console.log("sort and bin", performance.now() - startTime);
-};
 
-export const rayTrace = async (
-  polygonInJS: [number, number][],
-  trianglesInJS: Triangle[],
-  options = { materialReflectivity: 0.7, maxBounces: 6 }
-) => {
-  if (!isInitialized) {
-    console.log("Triggered rayTrace before initialization was done!!!");
-  }
-  const thisToken = Symbol();
-  currentToken = thisToken;
-
-  const { polygon, polygonLength } = loadPolygon(polygonInJS);
-  if (thisToken !== currentToken) return;
-
-  const { triangles, triangleLength } = loadTriangle(trianglesInJS);
-  if (thisToken !== currentToken) return;
-
-  ti.addToKernelScope({
-    options,
-  });
-
-  const updateScoresMask = ti.kernel(() => {
+  updateScoresMask = ti.kernel((polygonLengthArg) => {
     for (let I of ti.ndrange(N, N)) {
-      scoresMask[I] = isPointInsidePolygon(points[I].xy, polygon, polygonLength);
+      scoresMask[I] = isPointInsidePolygon(points[I].xy, polygon, polygonLengthArg);
     }
   });
 
-  const updateTexture = ti.kernel(() => {
-    for (let I of ti.ndrange(N, N)) {
-      if (scoresMask[I] > 0) {
-        // Test code to average pixel scores over areas
-        // let scoresAgg = ti.f32(0);
-        // let traceCountAgg = ti.i32(0);
-        // for (let J of ti.ndrange(2, 2)) {
-        //   const i = I + J;
-        //   if (i[0] >= 0 && i[0] < N && i[1] >= 0 && i[1] < N) {
-        //     scoresAgg = scoresAgg + scores[i];
-        //     traceCountAgg = traceCountAgg + traceCount[i];
-        //   }
-        // }
-        // let color = getColorForScore(scoresAgg / traceCountAgg, colorPallet, colorPalletLength);
-        let color = getColorForScore(scores[I] / traceCount[I], colorPallet, colorPalletLength);
-        pixels[I] = color;
-      } else {
-        pixels[I] = [0, 0, 0];
+  updateTexture = ti.kernel({step: ti.i32},(step) => {
+    for (let I of ti.ndrange(N / step, N / step)) {
+      // Test code to average pixel scores over areas
+      let scoresAgg = ti.f32(0);
+      let traceCountAgg = ti.i32(0);
+      for (let J of ti.ndrange(step, step)) {
+        const i = I * step + J;
+        if (scoresMask[i] > 0) {
+          scoresAgg = scoresAgg + scores[i];
+          traceCountAgg = traceCountAgg + traceCount[i];
+        }
+      }
+      for (let J of ti.ndrange(step, step)) {
+        const i = I * step + J;
+        if (scoresMask[i] > 0) {
+          let color = getColorForScore(scoresAgg / traceCountAgg, colorPallet, colorPalletLength);
+          pixels[i] = color;
+        } else {
+          pixels[i] = [0, 0, 0];
+        }
       }
     }
   });
-  const rayTrace = ti.kernel((tracedRaysTarget: ti.i32, reset: Bool) => {
+
+
+  traceKernel = ti.kernel((tracedRaysTarget: ti.i32, reset: Bool, triangleLengthArg) => {
     const computeScoreForPoint = (position: ti.Vector) => {
       let score = ti.f32(0);
       let tracedRays = 1;
@@ -155,20 +144,21 @@ export const rayTrace = async (
       let nextNormal = [ti.f32(0.0), ti.f32(0.0), ti.f32(1.0)];
       for (let _ of ti.range(tracedRaysTarget)) {
         const ray = generateRayFromNormal(nextNormal);
-        let resBuilding = intersectRayWithGeometry(nextPosition, ray, triangles, triangleLength);
+        let resBuilding = intersectRayWithGeometry(nextPosition, ray, triangles, triangleLengthArg);
         let resTheRest = intersectRayWithAcceleratedGeometry(
-          [0,0,1],
+          [0, 0, 1],
           position,
           bins,
           binsLength,
           vertices,
           indices,
           indicesindices,
-          tlBins, tlBinsLength
+          tlBins,
+          tlBinsLength
         );
-        let resToUse = resBuilding
+        let resToUse = resBuilding;
         if (resTheRest.isHit && resTheRest.t < resBuilding.t) {
-          resToUse = resTheRest
+          resToUse = resTheRest;
         }
         if (!resBuilding.isHit) {
           const scoreForAngle = getSpecificVCSScoreAtRay(ray);
@@ -188,10 +178,11 @@ export const rayTrace = async (
             // assign next position adjust for reflection factor and restart.
             nextPosition = resBuilding.intersectionPoint;
             nextNormal = resBuilding.triangleNormal;
-            remainingLightFactor = remainingLightFactor *resToUse.reflectivity;
+            remainingLightFactor = remainingLightFactor * resToUse.reflectivity;
             bounces = bounces + 1;
           }
-      }}
+        }
+      }
       return { score, tracedRays };
     };
 
@@ -207,27 +198,80 @@ export const rayTrace = async (
       }
     }
   });
-  if (thisToken !== currentToken) return;
-  updateScoresMask();
-  if (thisToken !== currentToken) return;
+};
+
+export const rayTrace = async (
+  polygonInJS: [number, number][],
+  trianglesInJS: Triangle[],
+  options = { materialReflectivity: 0.7, maxBounces: 6 }
+) => {
+  if (!isInitialized) {
+    console.log("Triggered rayTrace before initialization was done!!!");
+  }
+  const thisToken = Symbol();
+  currentToken = thisToken;
+  if (thisToken !== currentToken) {
+    return;
+  }
+
+  let start = performance.now();
+  const polygonLengthPromise = loadPolygon(polygonInJS).then((_) => {
+    console.log("loadPolygon", performance.now() - start);
+    return _;
+  });
+  if (thisToken !== currentToken) {
+    return;
+  }
+
+  start = performance.now();
+  const triangleLengthPromise = loadTriangle(trianglesInJS).then((_) => {
+    console.log("loadTriangle", performance.now() - start);
+    return _;
+  });
+  if (thisToken !== currentToken) {
+    return;
+  }
+
+  ti.addToKernelScope({
+    options,
+  });
+
+  if (thisToken !== currentToken) {
+    return;
+  }
+  start = performance.now();
+  const polygonLength = await polygonLengthPromise;
+  updateScoresMask(polygonLength);
+  console.log("updateScoresMask", performance.now() - start);
+  if (thisToken !== currentToken) {
+    return;
+  }
 
   let i = 0;
-  const steps = 2000;
-  const tracesPerStep = 30;
+  const steps = 4000;
+  const tracesPerStep = 6;
   async function frame() {
-    if (thisToken !== currentToken) return;
+    if (thisToken !== currentToken) {
+      return;
+    }
     i = i + 1;
     const start = performance.now();
-    await rayTrace(tracesPerStep, false);
-    // i%10 === 1  && console.log("raytrace", performance.now() - start);
-    if (thisToken !== currentToken) return;
-    updateTexture();
-    if (thisToken !== currentToken) return;
+    await traceKernel(tracesPerStep, false, trianglesInJS.length);
+    i % 10 === 1 && console.log("raytrace", i, " : ", performance.now() - start);
+    if (thisToken !== currentToken) {
+      return;
+    }
+    updateTexture(1);
+    if (thisToken !== currentToken) {
+      return;
+    }
     canvas.setImage(pixels);
-
     i < steps && requestAnimationFrame(frame);
   }
-  if (thisToken !== currentToken) return;
-  rayTrace(tracesPerStep, true);
+  if (thisToken !== currentToken) {
+    return;
+  }
+  const triangleLength = await triangleLengthPromise;
+  traceKernel(tracesPerStep, true, triangleLength);
   requestAnimationFrame(frame);
 };

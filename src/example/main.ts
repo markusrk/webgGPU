@@ -129,7 +129,7 @@ htmlCanvas.height = resolution;
 
 const main = async () => {
   await init(htmlCanvas, resolution);
-  await preComputeSurroundings();
+  await initializeSurroundings();
   rayTrace(polygonInJS, wallsInJs, bounceOptions);
 };
 main();
