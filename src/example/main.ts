@@ -1,11 +1,10 @@
 import * as ti from "taichi.js";
-import { init, preComputeSurroundings, rayTrace } from "../rayTracer";
+import { init, initializeSurroundings, rayTrace } from "../rayTracer";
 import { inwardsBoxFromAABBWithwindow } from "./geometryBuilder";
 const OFFSET = 0.01;
 
 const sizeInMeters = 100;
 const resolution = 600;
-let defaultWindowOptions = { windowSize: 50, windowSpacing: 200, windowHeight: 100 };
 let bounceOptions = { materialReflectivity: 0.9, maxBounces: 4 };
 let windowWidth = 0.1;
 let windowHeight = 0.1;
@@ -21,12 +20,11 @@ let polygonInJS = [
 const updatePolygon = (p: { x: number; y: number }) => {
   polygonInJS = [
     [sizeInMeters * 0.1, sizeInMeters * 0.1],
-    [sizeInMeters * 0.1, sizeInMeters * p.y/resolution],
-    [sizeInMeters * p.x/resolution, sizeInMeters * p.y/resolution],
-    [sizeInMeters * p.x/resolution, sizeInMeters * 0.1],
+    [sizeInMeters * 0.1, (sizeInMeters * p.y) / resolution],
+    [(sizeInMeters * p.x) / resolution, (sizeInMeters * p.y) / resolution],
+    [(sizeInMeters * p.x) / resolution, sizeInMeters * 0.1],
     [sizeInMeters * 0.1, sizeInMeters * 0.1],
   ];
-  updateImage(polygonInJS, wallsInJs, bounceOptions);
 };
 
 let wallsInJs = [
@@ -39,11 +37,11 @@ let wallsInJs = [
   ),
 ];
 
-const updateWalls = (p: { x: number; y: number }, windowOptions?: any) => {
+const updateWalls = (p: { x: number; y: number }) => {
   wallsInJs = [
     ...inwardsBoxFromAABBWithwindow(
       [sizeInMeters * (0.1 - OFFSET), sizeInMeters * (0.1 - OFFSET), 0],
-      [sizeInMeters * (p.x/resolution + OFFSET), sizeInMeters * (p.y/resolution + OFFSET), 1000],
+      [sizeInMeters * (p.x / resolution + OFFSET), sizeInMeters * (p.y / resolution + OFFSET), 1000],
       windowWidth,
       windowHeight
     ),
@@ -91,8 +89,11 @@ document.getElementById("maxBouncesInput")!.addEventListener("input", (e) => {
 });
 
 const updateCoordinate = (x, y) => {
-  updateWalls({ x, y: resolution - y });
-  updatePolygon({ x, y: resolution - y });
+  const htmlCanvas = document.getElementById("result_canvas")! as ti.Canvas;
+  const scaledX = (x / htmlCanvas.width) * resolution;
+  const scaledY = (y / htmlCanvas.height) * resolution;
+  updateWalls({ x: scaledX, y: resolution - scaledY });
+  updatePolygon({ x: scaledX, y: resolution - scaledY });
   updateImage(polygonInJS, wallsInJs, bounceOptions);
 };
 
