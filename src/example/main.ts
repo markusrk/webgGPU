@@ -102,7 +102,18 @@ const updateImage = (polygonInJS, wallsInJS, bounceOptions) => {
 };
 
 // @ts-ignore
-window.updateCoordinate = updateCoordinate;
+window.updateCoordinate = debounce(updateCoordinate, 10);
+
+function debounce(func: Function, delay: number) {
+  let timerId: NodeJS.Timeout;
+  return function (...args: any[]) {
+    clearTimeout(timerId);
+    timerId = setTimeout(() => {
+      func.apply(this, args);
+    }, delay);
+  };
+}
+
 
 // This is bottom part is the code that matters. The rest is scaffolding.
 const htmlCanvas = document.getElementById("result_canvas")! as ti.Canvas;
