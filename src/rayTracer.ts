@@ -15,7 +15,18 @@ const MAX_DAYLIGHT = 12.641899784120097;
 
 let currentToken = undefined; // Step 1: Initialize a unique symbol as the cancellation token
 
-let N, points, scoresMask, scores, pixels, traceCount, traceKernel, updateTexture, updateScoresMask, reflectivityAndBouncesParams;
+type Options = { materialReflectivity: number; maxBounces: number; resolution: number; samplesPerPoint: number };
+
+let N,
+  points,
+  scoresMask,
+  scores,
+  pixels,
+  traceCount,
+  traceKernel,
+  updateTexture,
+  updateScoresMask,
+  reflectivityAndBouncesParams;
 let isInitialized = false;
 
 let htmlCanvas;
@@ -31,6 +42,15 @@ const colorPalletJS = [
 const colorPalletLength = colorPalletJS.length;
 const colorPallet = ti.Vector.field(4, ti.f32, colorPalletLength) as ti.Field;
 
+const initializeReflectivityAndBounces = ({ reflectivity, bounces }) => {
+  reflectivityAndBouncesParams = ti.field(ti.f32, [2]) as ti.Field;
+  reflectivityAndBouncesParams.fromArray([0.7, 6]);
+  ti.addToKernelScope({reflectivityAndBouncesParams})
+};
+const setReflectivityAndBounces = ({ reflectivity, bounces }) => {
+  reflectivityAndBouncesParams.fromArray([reflectivity, bounces]);
+};
+
 export const init = async (input_canvas, resolution) => {
   htmlCanvas = input_canvas;
   await ti.init();
@@ -42,8 +62,7 @@ export const init = async (input_canvas, resolution) => {
   scores = ti.field(ti.f32, [N, N]) as ti.Field;
   pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
   traceCount = ti.field(ti.i32, [N, N]) as ti.Field;
-  reflectivityAndBouncesParams = ti.field(ti.f32, [2]) as ti.Field;
-  reflectivityAndBouncesParams.fromArray([0.7, 6]);
+  initializeReflectivityAndBounces({reflectivity: 0.7, bounces: 6});
   const gridIndexToMeter = 100 / resolution;
 
   ti.addToKernelScope({
@@ -225,11 +244,7 @@ export const initializeSurroundings = async () => {
   });
 };
 
-export const rayTrace = async (
-  polygonInJS: [number, number][],
-  trianglesInJS: Triangle[],
-  options = { materialReflectivity: 0.7, maxBounces: 6 }
-) => {
+export const rayTrace = async (polygonInJS: [number, number][], trianglesInJS: Triangle[], options: Options) => {
   if (!isInitialized) {
     console.log("Triggered rayTrace before initialization was done!!!");
   }
@@ -239,7 +254,12 @@ export const rayTrace = async (
     return;
   }
 
-  reflectivityAndBouncesParams.fromArray([options.materialReflectivity, options.maxBounces]);
+  // if (options.resolution != N) {
+  //   console.log("Resolution changed, reinitializing");
+  //   await init(htmlCanvas, options.resolution);
+  //   await initializeSurroundings();
+  // }
+  setReflectivityAndBounces({ reflectivity: options.materialReflectivity, bounces: options.maxBounces })
 
   let start = performance.now();
   const polygonLengthPromise = loadPolygon(polygonInJS).then((_) => {
