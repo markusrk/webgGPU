@@ -108,7 +108,9 @@ export const initializeSurroundings = async () => {
     }
   });
 
-  updateTexture = ti.kernel({step: ti.i32},(step) => {
+  updateTexture = ti.kernel({ step: ti.i32, fade: ti.f32 }, (step, fade) => {
+    let fade2 = 1 - fade;
+    let step2 = ti.i32(step / 2);
     for (let I of ti.ndrange(N / step, N / step)) {
       // Test code to average pixel scores over areas
       let scoresAgg = ti.f32(0);
@@ -130,8 +132,30 @@ export const initializeSurroundings = async () => {
         }
       }
     }
+    for (let I of ti.ndrange(N / step2, N / step2)) {
+      // Test code to average pixel scores over areas
+      let scoresAgg = ti.f32(0);
+      let traceCountAgg = ti.i32(0);
+      for (let J of ti.ndrange(step2, step2)) {
+        const i = I * step2 + J;
+        if (scoresMask[i] > 0) {
+          scoresAgg = scoresAgg + scores[i];
+          traceCountAgg = traceCountAgg + traceCount[i];
+        }
+      }
+      for (let J of ti.ndrange(step2, step2)) {
+        const i = I * step2 + J;
+        if (scoresMask[i] > 0) {
+          let color = getColorForScore(scoresAgg / traceCountAgg, colorPallet, colorPalletLength);
+          if (step2 > 1) {
+            pixels[i] = fade2 * color + pixels[i] * fade;
+          }
+        } else {
+          pixels[i] = [0, 0, 0];
+        }
+      }
+    }
   });
-
 
   traceKernel = ti.kernel((tracedRaysTarget: ti.i32, reset: Bool, triangleLengthArg) => {
     const computeScoreForPoint = (position: ti.Vector) => {
@@ -261,7 +285,14 @@ export const rayTrace = async (
     if (thisToken !== currentToken) {
       return;
     }
-    updateTexture(1);
+    const sampleTarget = 1024*4;
+    const averageacross = Math.min(
+      [2, 4, 8, 16, 32, 64, 128, 256].find((v) => sampleTarget <= v * v * i),
+      32
+    );
+    const floatingVersion = Math.sqrt(sampleTarget / i);
+    const fade = Math.min((floatingVersion - averageacross / 2) / (averageacross - averageacross / 2), 1);
+    updateTexture(averageacross, fade);
     if (thisToken !== currentToken) {
       return;
     }
