@@ -15,7 +15,14 @@ const MAX_DAYLIGHT = 12.641899784120097;
 
 let currentToken = undefined; // Step 1: Initialize a unique symbol as the cancellation token
 
-export type Options = { materialReflectivity: number; maxBounces: number; resolution: number; samplesPerPoint: number, triangleCount: number, sizeInMeters: number };
+export type Options = {
+  materialReflectivity: number;
+  maxBounces: number;
+  resolution: number;
+  samplesPerPoint: number;
+  triangleCount: number;
+  sizeInMeters: number;
+};
 
 let N,
   points,
@@ -28,7 +35,7 @@ let N,
   updateScoresMask,
   reflectivityAndBouncesParams;
 let options = {} as Options;
-  let isInitialized = false;
+let isInitialized = false;
 
 let htmlCanvas;
 let canvas;
@@ -46,7 +53,7 @@ const colorPallet = ti.Vector.field(4, ti.f32, colorPalletLength) as ti.Field;
 const initializeReflectivityAndBounces = ({ reflectivity, bounces }) => {
   reflectivityAndBouncesParams = ti.field(ti.f32, [2]) as ti.Field;
   reflectivityAndBouncesParams.fromArray([0.7, 6]);
-  ti.addToKernelScope({reflectivityAndBouncesParams})
+  ti.addToKernelScope({ reflectivityAndBouncesParams });
 };
 const setReflectivityAndBounces = ({ reflectivity, bounces }) => {
   reflectivityAndBouncesParams.fromArray([reflectivity, bounces]);
@@ -63,9 +70,8 @@ export const init = async (input_canvas, options: Options) => {
   scores = ti.field(ti.f32, [N, N]) as ti.Field;
   pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
   traceCount = ti.field(ti.i32, [N, N]) as ti.Field;
-  initializeReflectivityAndBounces({reflectivity: 0.7, bounces: 6});
+  initializeReflectivityAndBounces({ reflectivity: 0.7, bounces: 6 });
   const gridIndexToMeter = options.sizeInMeters / options.resolution;
-  console.log("gridIndexToMeter = ", gridIndexToMeter)
 
   ti.addToKernelScope({
     points,
@@ -302,7 +308,7 @@ export const rayTrace = async (polygonInJS: [number, number][], trianglesInJS: T
 
   let i = 0;
   const steps = 4000;
-  const tracesPerStep = 6;
+  const tracesPerStep = 30;
   async function frame() {
     if (thisToken !== currentToken) {
       return;
@@ -314,7 +320,7 @@ export const rayTrace = async (polygonInJS: [number, number][], trianglesInJS: T
     if (thisToken !== currentToken) {
       return;
     }
-    const sampleTarget = 1024*4;
+    const sampleTarget = 1024;
     const averageacross = Math.min(
       [2, 4, 8, 16, 32, 64, 128, 256].find((v) => sampleTarget <= v * v * i),
       32
