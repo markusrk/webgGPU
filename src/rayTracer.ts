@@ -64,7 +64,8 @@ export const init = async (input_canvas, options: Options) => {
   pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
   traceCount = ti.field(ti.i32, [N, N]) as ti.Field;
   initializeReflectivityAndBounces({reflectivity: 0.7, bounces: 6});
-  const gridIndexToMeter = 100 / options.resolution;
+  const gridIndexToMeter = options.sizeInMeters / options.resolution;
+  console.log("gridIndexToMeter = ", gridIndexToMeter)
 
   ti.addToKernelScope({
     points,
