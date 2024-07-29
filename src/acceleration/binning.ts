@@ -48,8 +48,6 @@ const createBinsInJS = (binCount: number, min: Point, max: Point) => {
 export const createBins = (binCount: number, min, max) => {
   const binsInJS = createBinsInJS(binCount, min, max);
   const binsLength = [binsInJS.length,binsInJS[0].length];
-  console.log("binsLength = ", binsLength)
-  console.log("binsInJS = ", binsInJS)
   const bins = ti.field(binsType, binsLength) as ti.field;
   bins.fromArray(binsInJS);
   return { bins, binsLength };

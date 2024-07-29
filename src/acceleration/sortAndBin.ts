@@ -22,7 +22,6 @@ export const sortAndBin = async (vertices, indices, indicesLength) => {
   const countsPerBinJS = await countsPerBins.toArray();
 
   await updateBinsWithIndexes(bins, countsPerBinJS);
-  bins.toArray().then(console.log);
   const indicesIndicesLength = countsPerBinJS.flat().reduce((a, b) => a + b, 0);
   const indicesindices = ti.field(ti.i32, [indicesIndicesLength]) as ti.field;
 
@@ -55,11 +54,9 @@ export const aggregatedBinsType = ti.types.struct({
 export const aggregateBins = async (bins, binSize) => {
   const binsInJS = await bins.toArray();
   const binsLength = [binsInJS.length, binsInJS[0].length];
-  console.log("binsInJS = ", binsInJS);
   const aggreGateBinsInJS = [];
   for (let i = 0; i < binsLength[0]; i = i + binSize) {
     const xSlice = binsInJS.slice(i, i + binSize);
-    console.log("xSlice = ", xSlice)
     const ySlice = binsInJS.slice(i, i + binSize);
     const zSlice = binsInJS.slice(i, i + binSize);
     for (let j = 0; j < binsLength[1]; j = j + binSize) {
@@ -87,7 +84,6 @@ export const aggregateBins = async (bins, binSize) => {
       });
     }
   }
-  console.log("aggreGateBinsInJS = ", aggreGateBinsInJS);
   const tlBinsLength = aggreGateBinsInJS.length;
   const tlBins = ti.field(aggregatedBinsType, [tlBinsLength]) as ti.field;
   tlBins.fromArray(aggreGateBinsInJS);

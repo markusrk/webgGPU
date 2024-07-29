@@ -142,7 +142,6 @@ export class Accellerator {
       }
     });
     await this.sortTriangles();
-    this.resultsField.toArray().then(console.log);
 
     this.intersectWithGeometry = ti.classKernel(this, { ray: ti.types.vector(ti.f32, 3) }, (ray: ti.Vector<ti.f32>) => {
       let selectedSplitIndex = 0;
