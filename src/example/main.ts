@@ -118,14 +118,13 @@ const updateCoordinate = (x, y) => {
 
 const updateImage = (polygonInJS, wallsInJS, options) => {
   rayTrace(polygonInJS, wallsInJS, options);
-  // worker.postMessage({type: "update", polygon: polygonInJS});
 };
 
 // @ts-ignore
 window.updateCoordinate = debounce(updateCoordinate, 10);
 
 function debounce(func: Function, delay: number) {
-  let timerId: NodeJS.Timeout;
+  let timerId;
   return function (...args: any[]) {
     clearTimeout(timerId);
     timerId = setTimeout(() => {
