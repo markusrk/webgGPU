@@ -320,7 +320,7 @@ export const rayTrace = async (polygonInJS: [number, number][], trianglesInJS: T
     if (thisToken !== currentToken) {
       return;
     }
-    const sampleTarget = 1024;
+    const sampleTarget = currentOptions.samplesPerPoint;
     const averageacross = Math.min(
       [2, 4, 8, 16, 32, 64, 128, 256].find((v) => sampleTarget <= v * v * i),
       32
