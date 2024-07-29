@@ -14,7 +14,8 @@ export const intersectRayWithAcceleratedGeometry = ti.func(
         const iEnd = tlBins[k].iEnd;
         const jStart = tlBins[k].jStart;
         const jEnd = tlBins[k].jEnd;
-        for (let I of ti.ndrange(iEnd-iStart, jEnd-jStart)) {
+        for (let I2 of ti.ndrange(iEnd-iStart, jEnd-jStart)) {
+          const I = [I2[0] + iStart, I2[1] + jStart];
           const intersect = intersectRayWithBin(origin, ray, bins[I]);
           if (intersect.isHit && intersect.tmin < t) {
             const bin = bins[I];
