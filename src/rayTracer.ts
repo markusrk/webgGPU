@@ -261,9 +261,9 @@ export const rayTrace = async (polygonInJS: [number, number][], trianglesInJS: T
   //   await init(htmlCanvas, options.resolution);
   //   await initializeSurroundings();
   // }
-  setReflectivityAndBounces({ reflectivity: currentOptions.materialReflectivity, bounces: currentOptions.maxBounces })
+  setReflectivityAndBounces({ reflectivity: currentOptions.materialReflectivity, bounces: currentOptions.maxBounces });
 
-  if (currentOptions.triangleCount && (currentOptions.triangleCount !== options.triangleCount)) {
+  if (currentOptions.triangleCount && currentOptions.triangleCount !== options.triangleCount) {
     options.triangleCount = currentOptions.triangleCount;
     initializeSurroundings(currentOptions);
   }
