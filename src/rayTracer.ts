@@ -59,6 +59,7 @@ const setReflectivityAndBounces = ({ reflectivity, bounces }) => {
   reflectivityAndBouncesParams.fromArray([reflectivity, bounces]);
 };
 
+
 export const init = async (input_canvas, options: Options) => {
   htmlCanvas = input_canvas;
   await ti.init();
