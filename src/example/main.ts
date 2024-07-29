@@ -1,9 +1,15 @@
 import * as ti from "taichi.js";
-import { init, initializeSurroundings, rayTrace } from "../rayTracer";
+import { init, initializeSurroundings, Options, rayTrace } from "../rayTracer";
 import { inwardsBoxFromAABBWithwindow } from "./geometryBuilder";
 const OFFSET = 0.01;
 
-let options = { materialReflectivity: 0.99, maxBounces: 4, triangleCount: 1000, resolution: 300, sizeInMeters: 100 };
+
+let options: Options = { materialReflectivity: 0.99, maxBounces: 4, triangleCount: 1000, resolution: 300, sizeInMeters: 100, samplesPerPoint: 1000 };
+const resolutionParam = new URLSearchParams(window.location.search).get("resolution");
+if (resolutionParam) {
+  const resolution = parseInt(resolutionParam);
+  options = { ...options, resolution };
+}
 let windowWidth = 0.1;
 let windowHeight = 0.1;
 
@@ -93,6 +99,13 @@ document.getElementById("randomTriangleCountInput")?.addEventListener("input", (
   updateImage(polygonInJS, wallsInJs, {...options, triangleCount: count});
 });
 
+
+document.getElementById("minSamplesInput")?.addEventListener("input", (e) => {
+  const v = (e.target as HTMLInputElement).value;
+  const count = parseInt(v);
+  updateImage(polygonInJS, wallsInJs, {...options, samplesPerPoint: count});
+});
+
 const updateCoordinate = (x, y) => {
   const htmlCanvas = document.getElementById("result_canvas")! as ti.Canvas;
   const scaledX = (x / htmlCanvas.width) * options.resolution;
@@ -102,8 +115,8 @@ const updateCoordinate = (x, y) => {
   updateImage(polygonInJS, wallsInJs, options);
 };
 
-const updateImage = (polygonInJS, wallsInJS, bounceOptions) => {
-  rayTrace(polygonInJS, wallsInJS, bounceOptions);
+const updateImage = (polygonInJS, wallsInJS, options) => {
+  rayTrace(polygonInJS, wallsInJS, options);
   // worker.postMessage({type: "update", polygon: polygonInJS});
 };
 
