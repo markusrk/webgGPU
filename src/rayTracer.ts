@@ -5,7 +5,7 @@ import { isPointInsidePolygon } from "./pointInPolygon";
 import { generateRay, generateRayFromNormal } from "./randomRays";
 import { getSpecificVCSScoreAtRay } from "./sky";
 import { Triangle } from "./example/geometryBuilder";
-import { initRandomVertices } from "./test/geometryInit";
+import { initRandomVertices as initRandomTriangles } from "./test/geometryInit";
 import { aggregateBins, sortAndBin } from "./acceleration/sortAndBin";
 import { countTriangles, findMinMax, sortTriangles, triangleTouchesBBox } from "./acceleration/supportFunctions";
 import { initPolygon, initTriangle, loadPolygon, loadTriangle } from "./polygonAndTriangleLoaders";
@@ -115,7 +115,7 @@ export const initializeSurroundings = async (options: Options) => {
   }
 
   let startTime = performance.now();
-  const { vertices, indices } = await initRandomVertices(options.triangleCount);
+  const { vertices, indices } = await initRandomTriangles(options.triangleCount, options.sizeInMeters);
   console.log("init vertices", performance.now() - startTime);
 
   startTime = performance.now();
