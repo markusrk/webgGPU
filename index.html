@@ -12,23 +12,25 @@
             <br />
             Pull the blue point to move change the shape
             <h2>Reflection settings</h2>
-            Reflectivity: <input id="reflectivityInput" type="number" min="0" max="1" step="0.1" style="margin: 10px;" value="0.5" />
+            Reflectivity: <input id="reflectivityInput" type="number" min="0" max="1" step="0.1" style="margin: 10px;" value="0.5" /> (how much of the light is reflected off walls and roofs. (random triangles always reflects nothing))
             <br/>
-            Max bounces: <input id="maxBouncesInput" type="number" min="0" max="6" step="1" style="margin: 10px;" value="6" />
+            Max bounces: <input id="maxBouncesInput" type="number" min="0" max="6" step="1" style="margin: 10px;" value="6" /> (How many times will we allow each ray to bounce before declaring it a loss. Higher numbers = better accuracy and worse running time)
             <br>
             <h2>Performance settings</h2>
-            Resolution: <input id="resolutionInput" type="number" min="0" max="1000" step="100" style="margin: 10px;" value="500" />
+            Adjust resolution through the URL search parameter "resolution" Example: "?resolution=200": 
             <br />
-            Min samples per pixel <input id="minSamplesInput" type="number" min="0" max="10000" step="500" style="margin: 10px;" value="1" /> 
+            Min samples per pixel <input id="minSamplesInput" type="number" min="0" max="10000" step="500" style="margin: 10px;" value="1000" />  (higher numbers = reducing noise by reducing resolution)
             <br />
             <label for="randomTriangleCountInput">Random triangle count:</label>
             <select id="randomTriangleCountInput" style="margin: 10px; width:150px">
-                <option value="0">0</option>
+                <option value="1">1</option>
                 <option value="100">100</option>
-                <option value="1000">1000</option>
+                <option value="1000" selected>1000</option>
                 <option value="10000">10 000</option>
                 <option value="100000">100 000 (this will spend ~30 secs initializing)</option>
             </select>
+            </select> 
+            (I have not bothered importing fancy geometry. This options spreads some randomly generated triangles around the room. High numbers requires a lot of time to initialize the acceleration structure)
         </div>
     </div>
 
