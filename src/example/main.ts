@@ -95,15 +95,16 @@ document.getElementById("maxBouncesInput")!.addEventListener("input", (e) => {
 document.getElementById("randomTriangleCountInput")?.addEventListener("input", (e) => {
   const v = (e.target as HTMLInputElement).value;
   const count = parseInt(v);
-  console.log("count = ", count)
-  updateImage(polygonInJS, wallsInJs, {...options, triangleCount: count});
+  options = {...options, triangleCount: count}
+  updateImage(polygonInJS, wallsInJs, options);
 });
 
 
 document.getElementById("minSamplesInput")?.addEventListener("input", (e) => {
   const v = (e.target as HTMLInputElement).value;
   const count = parseInt(v);
-  updateImage(polygonInJS, wallsInJs, {...options, samplesPerPoint: count});
+  options = {...options, samplesPerPoint: count}
+  updateImage(polygonInJS, wallsInJs, options);
 });
 
 const updateCoordinate = (x, y) => {
