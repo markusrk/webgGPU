@@ -82,8 +82,9 @@ export const intersectRayWithBin = ti.func((origin: ti.Vector, ray: ti.Vector, b
   const tz1 = (bin.zMin - origin[2]) / ray[2];
   const tz2 = (bin.zMax - origin[2]) / ray[2];
 
-  const tmin = ti.max(ti.max(ti.min(tx1, tx2), ti.min(ty1, ty2)),ti.min(tz1, tz2));
-  const tmax = ti.min(ti.min(ti.max(tx1, tx2), ti.max(ty1, ty2)),ti.max(tz1, tz2));
-  const isHit = tmax >= tmin && tmax >= 0;
-  return {isHit, tmax, tmin}
+
+  const tClose = ti.max(ti.max(ti.min(tx1, tx2), ti.min(ty1, ty2)),ti.min(tz1, tz2));
+  const tFar = ti.min(ti.min(ti.max(tx1, tx2), ti.max(ty1, ty2)),ti.max(tz1, tz2));
+  const isHit = tFar >= tClose && tFar >= 0;
+  return {isHit, tmax: tFar, tmin: tClose}
 });
