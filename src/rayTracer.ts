@@ -15,7 +15,7 @@ const MAX_DAYLIGHT = 12.641899784120097;
 
 let currentToken = undefined; // Step 1: Initialize a unique symbol as the cancellation token
 
-type Options = { materialReflectivity: number; maxBounces: number; resolution: number; samplesPerPoint: number, triangleCount: number };
+export type Options = { materialReflectivity: number; maxBounces: number; resolution: number; samplesPerPoint: number, triangleCount: number, sizeInMeters: number };
 
 let N,
   points,
