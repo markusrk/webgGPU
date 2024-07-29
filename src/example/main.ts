@@ -4,8 +4,7 @@ import { inwardsBoxFromAABBWithwindow } from "./geometryBuilder";
 const OFFSET = 0.01;
 
 const sizeInMeters = 100;
-const resolution = 600;
-let bounceOptions = { materialReflectivity: 0.9, maxBounces: 4 };
+let options = { materialReflectivity: 0.9, maxBounces: 4, triangleCount: 1000, resolution: 600, sizeInMeters: 100 };
 let windowWidth = 0.1;
 let windowHeight = 0.1;
 
@@ -20,9 +19,9 @@ let polygonInJS = [
 const updatePolygon = (p: { x: number; y: number }) => {
   polygonInJS = [
     [sizeInMeters * 0.1, sizeInMeters * 0.1],
-    [sizeInMeters * 0.1, (sizeInMeters * p.y) / resolution],
-    [(sizeInMeters * p.x) / resolution, (sizeInMeters * p.y) / resolution],
-    [(sizeInMeters * p.x) / resolution, sizeInMeters * 0.1],
+    [sizeInMeters * 0.1, (sizeInMeters * p.y) / options.resolution],
+    [(sizeInMeters * p.x) / options.resolution, (sizeInMeters * p.y) / options.resolution],
+    [(sizeInMeters * p.x) / options.resolution, sizeInMeters * 0.1],
     [sizeInMeters * 0.1, sizeInMeters * 0.1],
   ];
 };
@@ -41,7 +40,7 @@ const updateWalls = (p: { x: number; y: number }) => {
   wallsInJs = [
     ...inwardsBoxFromAABBWithwindow(
       [sizeInMeters * (0.1 - OFFSET), sizeInMeters * (0.1 - OFFSET), 0],
-      [sizeInMeters * (p.x / resolution + OFFSET), sizeInMeters * (p.y / resolution + OFFSET), 1000],
+      [sizeInMeters * (p.x / options.resolution + OFFSET), sizeInMeters * (p.y / options.resolution + OFFSET), 1000],
       windowWidth,
       windowHeight
     ),
@@ -60,7 +59,7 @@ document.getElementById("windowSize")!.addEventListener("input", (e) => {
       windowHeight
     ),
   ];
-  updateImage(polygonInJS, wallsInJs, bounceOptions);
+  updateImage(polygonInJS, wallsInJs, options);
 });
 document.getElementById("windowHeight")!.addEventListener("input", (e) => {
   const v = (e.target as HTMLInputElement).value;
@@ -74,27 +73,34 @@ document.getElementById("windowHeight")!.addEventListener("input", (e) => {
       windowHeight
     ),
   ];
-  updateImage(polygonInJS, wallsInJs, bounceOptions);
+  updateImage(polygonInJS, wallsInJs, options);
 });
 document.getElementById("reflectivityInput")!.addEventListener("input", (e) => {
   const v = (e.target as HTMLInputElement).value;
-  bounceOptions = { ...bounceOptions, materialReflectivity: parseFloat(v) };
-  updateImage(polygonInJS, wallsInJs, bounceOptions);
+  options = { ...options, materialReflectivity: parseFloat(v) };
+  updateImage(polygonInJS, wallsInJs, options);
 });
 document.getElementById("maxBouncesInput")!.addEventListener("input", (e) => {
   const v = (e.target as HTMLInputElement).value;
-  bounceOptions = { ...bounceOptions, maxBounces: parseInt(v) };
+  options = { ...options, maxBounces: parseInt(v) };
 
-  updateImage(polygonInJS, wallsInJs, bounceOptions);
+  updateImage(polygonInJS, wallsInJs, options);
+});
+
+document.getElementById("randomTriangleCountInput")?.addEventListener("input", (e) => {
+  const v = (e.target as HTMLInputElement).value;
+  const count = parseInt(v);
+  console.log("count = ", count)
+  updateImage(polygonInJS, wallsInJs, {...options, triangleCount: count});
 });
 
 const updateCoordinate = (x, y) => {
   const htmlCanvas = document.getElementById("result_canvas")! as ti.Canvas;
-  const scaledX = (x / htmlCanvas.width) * resolution;
-  const scaledY = (y / htmlCanvas.height) * resolution;
-  updateWalls({ x: scaledX, y: resolution - scaledY });
-  updatePolygon({ x: scaledX, y: resolution - scaledY });
-  updateImage(polygonInJS, wallsInJs, bounceOptions);
+  const scaledX = (x / htmlCanvas.width) * options.resolution;
+  const scaledY = (y / htmlCanvas.height) * options.resolution;
+  updateWalls({ x: scaledX, y: options.resolution - scaledY });
+  updatePolygon({ x: scaledX, y: options.resolution - scaledY });
+  updateImage(polygonInJS, wallsInJs, options);
 };
 
 const updateImage = (polygonInJS, wallsInJS, bounceOptions) => {
@@ -117,19 +123,19 @@ function debounce(func: Function, delay: number) {
 
 const fixDotPosition = () => {
   const dragElement = document.getElementById("dragElement")!;
-  dragElement.style.left = resolution * 0.9 + "px";
-  dragElement.style.top = resolution * 0.1 + "px";
+  dragElement.style.left = options.resolution * 0.9 + "px";
+  dragElement.style.top = options.resolution * 0.1 + "px";
 };
 fixDotPosition();
 
 // This is bottom part is the code that matters. The rest is scaffolding.
 const htmlCanvas = document.getElementById("result_canvas")! as ti.Canvas;
-htmlCanvas.width = resolution;
-htmlCanvas.height = resolution;
+htmlCanvas.width = options.resolution;
+htmlCanvas.height = options.resolution;
 
 const main = async () => {
-  await init(htmlCanvas, resolution);
-  await initializeSurroundings();
-  rayTrace(polygonInJS, wallsInJs, bounceOptions);
+  await init(htmlCanvas, options);
+  await initializeSurroundings(options);
+  rayTrace(polygonInJS, wallsInJs, options);
 };
 main();

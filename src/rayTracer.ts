@@ -15,7 +15,7 @@ const MAX_DAYLIGHT = 12.641899784120097;
 
 let currentToken = undefined; // Step 1: Initialize a unique symbol as the cancellation token
 
-type Options = { materialReflectivity: number; maxBounces: number; resolution: number; samplesPerPoint: number };
+type Options = { materialReflectivity: number; maxBounces: number; resolution: number; samplesPerPoint: number, triangleCount: number };
 
 let N,
   points,
@@ -27,7 +27,8 @@ let N,
   updateTexture,
   updateScoresMask,
   reflectivityAndBouncesParams;
-let isInitialized = false;
+let options = {} as Options;
+  let isInitialized = false;
 
 let htmlCanvas;
 let canvas;
@@ -51,11 +52,11 @@ const setReflectivityAndBounces = ({ reflectivity, bounces }) => {
   reflectivityAndBouncesParams.fromArray([reflectivity, bounces]);
 };
 
-export const init = async (input_canvas, resolution) => {
+export const init = async (input_canvas, options: Options) => {
   htmlCanvas = input_canvas;
   await ti.init();
   canvas = new ti.Canvas(htmlCanvas);
-  N = resolution;
+  N = options.resolution;
 
   points = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
   scoresMask = ti.field(ti.f32, [N, N]) as ti.Field;
@@ -63,7 +64,7 @@ export const init = async (input_canvas, resolution) => {
   pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
   traceCount = ti.field(ti.i32, [N, N]) as ti.Field;
   initializeReflectivityAndBounces({reflectivity: 0.7, bounces: 6});
-  const gridIndexToMeter = 100 / resolution;
+  const gridIndexToMeter = 100 / options.resolution;
 
   ti.addToKernelScope({
     points,
@@ -107,18 +108,17 @@ export const init = async (input_canvas, resolution) => {
   isInitialized = true;
 };
 
-export const initializeSurroundings = async () => {
+export const initializeSurroundings = async (options: Options) => {
   if (!isInitialized) {
     console.log("Triggered preComputeSurroundings before initialization was done!!!");
   }
 
-  const M = 1000;
   let startTime = performance.now();
-  const { vertices, indices } = await initRandomVertices(M);
+  const { vertices, indices } = await initRandomVertices(options.triangleCount);
   console.log("init vertices", performance.now() - startTime);
 
   startTime = performance.now();
-  const { bins, binsLength, indicesindices } = await sortAndBin(vertices, indices, M);
+  const { bins, binsLength, indicesindices } = await sortAndBin(vertices, indices, options.triangleCount);
   const { tlBins, tlBinsLength } = await aggregateBins(bins, 5);
   console.log("sort and bin", performance.now() - startTime);
 
@@ -244,7 +244,7 @@ export const initializeSurroundings = async () => {
   });
 };
 
-export const rayTrace = async (polygonInJS: [number, number][], trianglesInJS: Triangle[], options: Options) => {
+export const rayTrace = async (polygonInJS: [number, number][], trianglesInJS: Triangle[], currentOptions: Options) => {
   if (!isInitialized) {
     console.log("Triggered rayTrace before initialization was done!!!");
   }
@@ -259,8 +259,12 @@ export const rayTrace = async (polygonInJS: [number, number][], trianglesInJS: T
   //   await init(htmlCanvas, options.resolution);
   //   await initializeSurroundings();
   // }
-  setReflectivityAndBounces({ reflectivity: options.materialReflectivity, bounces: options.maxBounces })
+  setReflectivityAndBounces({ reflectivity: currentOptions.materialReflectivity, bounces: currentOptions.maxBounces })
 
+  if (currentOptions.triangleCount && (currentOptions.triangleCount !== options.triangleCount)) {
+    options.triangleCount = currentOptions.triangleCount;
+    initializeSurroundings(currentOptions);
+  }
   let start = performance.now();
   const polygonLengthPromise = loadPolygon(polygonInJS).then((_) => {
     console.log("loadPolygon", performance.now() - start);
@@ -280,7 +284,7 @@ export const rayTrace = async (polygonInJS: [number, number][], trianglesInJS: T
   }
 
   ti.addToKernelScope({
-    options,
+    options: currentOptions,
   });
 
   if (thisToken !== currentToken) {
