@@ -15,8 +15,7 @@ const MAX_DAYLIGHT = 12.641899784120097;
 
 let currentToken = undefined; // Step 1: Initialize a unique symbol as the cancellation token
 
-let N, points, scoresMask, scores, pixels, traceCount, traceKernel, updateTexture, updateScoresMask;
-let options = { materialReflectivity: 0.7, maxBounces: 6 };
+let N, points, scoresMask, scores, pixels, traceCount, traceKernel, updateTexture, updateScoresMask, reflectivityAndBouncesParams;
 let isInitialized = false;
 
 let htmlCanvas;
@@ -43,6 +42,8 @@ export const init = async (input_canvas, resolution) => {
   scores = ti.field(ti.f32, [N, N]) as ti.Field;
   pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
   traceCount = ti.field(ti.i32, [N, N]) as ti.Field;
+  reflectivityAndBouncesParams = ti.field(ti.f32, [2]) as ti.Field;
+  reflectivityAndBouncesParams.fromArray([0.7, 6]);
   const gridIndexToMeter = 100 / resolution;
 
   ti.addToKernelScope({
@@ -66,7 +67,7 @@ export const init = async (input_canvas, resolution) => {
     findMinMax,
     gridIndexToMeter,
     aggregateBins,
-    options,
+    reflectivityAndBouncesParams,
     countTriangles,
     sortTriangles,
     triangleTouchesBBox,
@@ -163,7 +164,7 @@ export const initializeSurroundings = async () => {
       let tracedRays = 1;
       let bounces = 0;
       let remainingLightFactor = ti.f32(1.0);
-      const maxBounces = options.maxBounces;
+      const maxBounces = reflectivityAndBouncesParams[1];
       let nextPosition = position;
       let nextNormal = [ti.f32(0.0), ti.f32(0.0), ti.f32(1.0)];
       for (let _ of ti.range(tracedRaysTarget)) {
@@ -237,6 +238,8 @@ export const rayTrace = async (
   if (thisToken !== currentToken) {
     return;
   }
+
+  reflectivityAndBouncesParams.fromArray([options.materialReflectivity, options.maxBounces]);
 
   let start = performance.now();
   const polygonLengthPromise = loadPolygon(polygonInJS).then((_) => {

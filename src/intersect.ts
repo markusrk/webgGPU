@@ -68,7 +68,7 @@ export const intersectRayWithGeometry = ti.func(
         triangleNormal = res.triangleNormal;
       }
     }
-    return { isHit, intersectionPoint, triangleNormal, t, reflectivity: ti.f32(options.materialReflectivity) };
+    return { isHit, intersectionPoint, triangleNormal, t, reflectivity: ti.f32(reflectivityAndBouncesParams[0]) };
   }
 );
 
