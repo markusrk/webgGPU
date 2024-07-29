@@ -191,6 +191,7 @@ export const initializeSurroundings = async (options: Options) => {
         const ray = generateRayFromNormal(nextNormal);
         let resBuilding = intersectRayWithGeometry(nextPosition, ray, triangles, triangleLengthArg);
         let resTheRest = intersectRayWithAcceleratedGeometry(
+          // todo: insert nextPosition and ray here when testing is over. This is just to demonstrate the effect of triangles.
           [0, 0, 1],
           position,
           bins,
