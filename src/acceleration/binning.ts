@@ -66,6 +66,6 @@ export const updateBinsWithIndexes = async (bins, trianglesPerBin) => {
   for (let i = 0; i < flatBinsWithIndexesInJS.length; i += binCount) {
     binsWithIndexesInJS.push(flatBinsWithIndexesInJS.slice(i, i + binCount));
   }
-  bins.fromArray(binsWithIndexesInJS);
+  await bins.fromArray(binsWithIndexesInJS);
   return bins;
 };
