@@ -3,8 +3,14 @@ import { init, initializeSurroundings, Options, rayTrace } from "../rayTracer";
 import { inwardsBoxFromAABBWithwindow } from "./geometryBuilder";
 const OFFSET = 0.01;
 
-
-let options: Options = { materialReflectivity: 0.99, maxBounces: 4, triangleCount: 1000, resolution: 300, sizeInMeters: 100, samplesPerPoint: 1000 };
+let options: Options = {
+  materialReflectivity: 0.99,
+  maxBounces: 4,
+  triangleCount: 1000,
+  resolution: 300,
+  sizeInMeters: 100,
+  samplesPerPoint: 1000,
+};
 const resolutionParam = new URLSearchParams(window.location.search).get("resolution");
 if (resolutionParam) {
   const resolution = parseInt(resolutionParam);
@@ -12,6 +18,9 @@ if (resolutionParam) {
 }
 let windowWidth = 0.1;
 let windowHeight = 0.1;
+
+let x = 0.9;
+let y = 0.9;
 
 let polygonInJS = [
   [options.sizeInMeters * 0.1, options.sizeInMeters * 0.1],
@@ -45,7 +54,11 @@ const updateWalls = (p: { x: number; y: number }) => {
   wallsInJs = [
     ...inwardsBoxFromAABBWithwindow(
       [options.sizeInMeters * (0.1 - OFFSET), options.sizeInMeters * (0.1 - OFFSET), 0],
-      [options.sizeInMeters * (p.x / options.resolution + OFFSET), options.sizeInMeters * (p.y / options.resolution + OFFSET), 1000],
+      [
+        options.sizeInMeters * (p.x / options.resolution + OFFSET),
+        options.sizeInMeters * (p.y / options.resolution + OFFSET),
+        1000,
+      ],
       windowWidth,
       windowHeight
     ),
@@ -59,7 +72,7 @@ document.getElementById("windowSize")!.addEventListener("input", (e) => {
     // ...boxFromAABBWithHoleInTheTop([resolution * 0.1, resolution * 0.1, 0], [resolution * 0.9, resolution * 0.9, 400]),
     ...inwardsBoxFromAABBWithwindow(
       [options.sizeInMeters * (0.1 - OFFSET), options.sizeInMeters * (0.1 - OFFSET), 0],
-      [options.sizeInMeters * (0.9 + OFFSET), options.sizeInMeters * (0.9 + OFFSET), 1000],
+      [options.sizeInMeters * (x + OFFSET), options.sizeInMeters * (y + OFFSET), 1000],
       windowWidth,
       windowHeight
     ),
@@ -73,7 +86,7 @@ document.getElementById("windowHeight")!.addEventListener("input", (e) => {
     // ...boxFromAABBWithHoleInTheTop([resolution * 0.1, resolution * 0.1, 0], [resolution * 0.9, resolution * 0.9, 400]),
     ...inwardsBoxFromAABBWithwindow(
       [options.sizeInMeters * (0.1 - OFFSET), options.sizeInMeters * (0.1 - OFFSET), 0],
-      [options.sizeInMeters * (0.9 + OFFSET), options.sizeInMeters * (0.9 + OFFSET), 1000],
+      [options.sizeInMeters * (x + OFFSET), options.sizeInMeters * (y + OFFSET), 1000],
       windowWidth,
       windowHeight
     ),
@@ -95,24 +108,25 @@ document.getElementById("maxBouncesInput")!.addEventListener("input", (e) => {
 document.getElementById("randomTriangleCountInput")?.addEventListener("input", (e) => {
   const v = (e.target as HTMLInputElement).value;
   const count = parseInt(v);
-  options = {...options, triangleCount: count}
+  options = { ...options, triangleCount: count };
   updateImage(polygonInJS, wallsInJs, options);
 });
-
 
 document.getElementById("minSamplesInput")?.addEventListener("input", (e) => {
   const v = (e.target as HTMLInputElement).value;
   const count = parseInt(v);
-  options = {...options, samplesPerPoint: count}
+  options = { ...options, samplesPerPoint: count };
   updateImage(polygonInJS, wallsInJs, options);
 });
 
-const updateCoordinate = (x, y) => {
+const updateCoordinate = (newX, newY) => {
   const htmlCanvas = document.getElementById("result_canvas")! as ti.Canvas;
-  const scaledX = (x / htmlCanvas.width) * options.resolution;
-  const scaledY = (y / htmlCanvas.height) * options.resolution;
-  updateWalls({ x: scaledX, y: options.resolution - scaledY });
-  updatePolygon({ x: scaledX, y: options.resolution - scaledY });
+  x = (newX / htmlCanvas.width);
+  y = (1 - newY / htmlCanvas.height) ;
+  const scaledX = x * options.resolution
+  const scaledY = y * options.resolution
+  updateWalls({ x: scaledX, y: scaledY });
+  updatePolygon({ x: scaledX, y: scaledY });
   updateImage(polygonInJS, wallsInJs, options);
 };
 
