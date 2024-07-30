@@ -7,13 +7,13 @@ export const intersectRayWithAcceleratedGeometry = ti.func(
     let intersectionPoint = [ti.f32(0.0), ti.f32(0.0), ti.f32(0.0)] as ti.Vector;
     let t = ti.f32(1000000000);
     let triangleNormal = [ti.f32(0.0), ti.f32(0.0), ti.f32(0.0)] as ti.Vector;
-    for (let k of ti.range(tlBinsLength)) {
-      const intersectsTlBin = intersectRayWithBin(origin, ray, tlBins[k]);
+    for (let K of ti.ndrange(tlBinsLength, tlBinsLength)) {
+      const intersectsTlBin = intersectRayWithBin(origin, ray, tlBins[K]);
       if (intersectsTlBin.isHit) {
-        const iStart = tlBins[k].iStart;
-        const iEnd = tlBins[k].iEnd;
-        const jStart = tlBins[k].jStart;
-        const jEnd = tlBins[k].jEnd;
+        const iStart = tlBins[K].iStart;
+        const iEnd = tlBins[K].iEnd;
+        const jStart = tlBins[K].jStart;
+        const jEnd = tlBins[K].jEnd;
         for (let I2 of ti.ndrange(iEnd-iStart, jEnd-jStart)) {
           const I = [I2[0] + iStart, I2[1] + jStart];
           const intersect = intersectRayWithBin(origin, ray, bins[I]);

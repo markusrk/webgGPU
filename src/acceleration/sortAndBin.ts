@@ -56,6 +56,7 @@ export const aggregateBins = async (bins, binSize) => {
   const binsLength = [binsInJS.length, binsInJS[0].length];
   const aggreGateBinsInJS = [];
   for (let i = 0; i < binsLength[0]; i = i + binSize) {
+    const arr = []
     const xSlice = binsInJS.slice(i, i + binSize);
     const ySlice = binsInJS.slice(i, i + binSize);
     const zSlice = binsInJS.slice(i, i + binSize);
@@ -70,7 +71,7 @@ export const aggregateBins = async (bins, binSize) => {
       const iEnd = i + binSize;
       const jStart = j;
       const jEnd = j + binSize;
-      aggreGateBinsInJS.push({
+      arr.push({
         xMin,
         xMax,
         yMin,
@@ -83,9 +84,10 @@ export const aggregateBins = async (bins, binSize) => {
         jEnd,
       });
     }
+    aggreGateBinsInJS.push(arr);
   }
   const tlBinsLength = aggreGateBinsInJS.length;
-  const tlBins = ti.field(aggregatedBinsType, [tlBinsLength]) as ti.field;
+  const tlBins = ti.field(aggregatedBinsType, [tlBinsLength,tlBinsLength]) as ti.field;
   tlBins.fromArray(aggreGateBinsInJS);
 
   ti.addToKernelScope({ tlBins, tlBinsLength });
