@@ -8,7 +8,7 @@ const add = (a, b) => {
   return a.map((_, i) => a[i] + b[i]);
 };
 const scalarMul = (a, b) => {
-  return a.map((x) => x * b);
+  return a.map((x2) => x2 * b);
 };
 const wallTrianglesFromPoints = (p1, p2) => {
   const c1 = [p1[0], p1[1], p2[2]];
@@ -48,21 +48,54 @@ const upwardsFacingTrianglesFromPoints = (p1, p2) => {
   ];
 };
 const inwardsBoxFromAABBWithwindow = (p1, p2, windowWidth2, windowHeight2) => {
-  const x = [p2[0] - p1[0], 0, 0];
-  const y = [0, p2[1] - p1[1], 0];
+  const x2 = [p2[0] - p1[0], 0, 0];
+  const y2 = [0, p2[1] - p1[1], 0];
   const z = [0, 0, p2[2] - p1[2]];
-  const front = wallTrianglesFromPoints(add(p1, x), add(p1, z));
-  const right = wallTrianglesFromPoints(sub(p2, z), sub(p2, y));
-  const wp1 = add(add(add(p1, y), scalarMul(x, 0.5 - windowWidth2 / 2)), scalarMul(z, 0));
-  const wp2 = add(add(add(p1, y), scalarMul(z, windowHeight2)), scalarMul(x, 0.5 + windowWidth2 / 2));
-  const back = wallWithWindowFromPoints(add(p1, y), p2, wp1, wp2);
-  const left = wallTrianglesFromPoints(p1, add(add(p1, z), y));
+  const front = wallTrianglesFromPoints(add(p1, x2), add(p1, z));
+  const right = wallTrianglesFromPoints(sub(p2, z), sub(p2, y2));
+  const wp1 = add(add(add(p1, y2), scalarMul(x2, 0.5 - windowWidth2 / 2)), scalarMul(z, 0));
+  const wp2 = add(add(add(p1, y2), scalarMul(z, windowHeight2)), scalarMul(x2, 0.5 + windowWidth2 / 2));
+  const back = wallWithWindowFromPoints(add(p1, y2), p2, wp1, wp2);
+  const left = wallTrianglesFromPoints(p1, add(add(p1, z), y2));
   const top = downwardsFacingTrianglesFromPoints(add(p1, z), p2);
   const bottom = upwardsFacingTrianglesFromPoints(p1, sub(p2, z));
   return [...front, ...right, ...back, ...left, ...top, ...bottom];
 };
+const createBinsInJS = (binCount, min, max) => {
+  const binSizeX = (max[0] - min[0]) / binCount;
+  const binSizeY = (max[1] - min[1]) / binCount;
+  const newBinsInJS = [];
+  for (let i = 0; i < binCount; i += 1) {
+    const binRow = [];
+    for (let j = 0; j < binCount; j += 1) {
+      binRow.push({
+        aa: [i * binSizeX, j * binSizeY, 1e5],
+        bb: [(i + 1) * binSizeX, (j + 1) * binSizeY, -1e5],
+        iStart: 0,
+        iEnd: 0
+      });
+    }
+    newBinsInJS.push(binRow);
+  }
+  return newBinsInJS;
+};
+const main$1 = () => {
+  const a = [0, 0, 0];
+  const b = [100, 100, 100];
+  const masterBins = createBinsInJS(10, a, b);
+  masterBins.map((row) => row.map((bin) => bin.xMin));
+  console.log("masterBins = ", masterBins);
+};
+main$1();
 const OFFSET = 0.01;
-let options = { materialReflectivity: 0.99, maxBounces: 4, triangleCount: 1e3, resolution: 300, sizeInMeters: 100, samplesPerPoint: 1e3 };
+let options = {
+  materialReflectivity: 0.99,
+  maxBounces: 4,
+  triangleCount: 1e3,
+  resolution: 300,
+  sizeInMeters: 100,
+  samplesPerPoint: 1
+};
 const resolutionParam = new URLSearchParams(window.location.search).get("resolution");
 if (resolutionParam) {
   const resolution = parseInt(resolutionParam);
@@ -70,6 +103,8 @@ if (resolutionParam) {
 }
 let windowWidth = 0.1;
 let windowHeight = 0.1;
+let x = 0.9;
+let y = 0.9;
 let polygonInJS = [
   [options.sizeInMeters * 0.1, options.sizeInMeters * 0.1],
   [options.sizeInMeters * 0.1, options.sizeInMeters * 0.9],
@@ -92,7 +127,11 @@ let wallsInJs = [
 ];
 const updateWalls = (p) => {
   wallsInJs = [
-    ...inwardsBoxFromAABBWithwindow([options.sizeInMeters * (0.1 - OFFSET), options.sizeInMeters * (0.1 - OFFSET), 0], [options.sizeInMeters * (p.x / options.resolution + OFFSET), options.sizeInMeters * (p.y / options.resolution + OFFSET), 1e3], windowWidth, windowHeight)
+    ...inwardsBoxFromAABBWithwindow([options.sizeInMeters * (0.1 - OFFSET), options.sizeInMeters * (0.1 - OFFSET), 0], [
+      options.sizeInMeters * (p.x / options.resolution + OFFSET),
+      options.sizeInMeters * (p.y / options.resolution + OFFSET),
+      1e3
+    ], windowWidth, windowHeight)
   ];
 };
 document.getElementById("windowSize").addEventListener("input", (e) => {
@@ -100,7 +139,7 @@ document.getElementById("windowSize").addEventListener("input", (e) => {
   windowWidth = parseFloat(v);
   wallsInJs = [
     // ...boxFromAABBWithHoleInTheTop([resolution * 0.1, resolution * 0.1, 0], [resolution * 0.9, resolution * 0.9, 400]),
-    ...inwardsBoxFromAABBWithwindow([options.sizeInMeters * (0.1 - OFFSET), options.sizeInMeters * (0.1 - OFFSET), 0], [options.sizeInMeters * (0.9 + OFFSET), options.sizeInMeters * (0.9 + OFFSET), 1e3], windowWidth, windowHeight)
+    ...inwardsBoxFromAABBWithwindow([options.sizeInMeters * (0.1 - OFFSET), options.sizeInMeters * (0.1 - OFFSET), 0], [options.sizeInMeters * (x + OFFSET), options.sizeInMeters * (y + OFFSET), 1e3], windowWidth, windowHeight)
   ];
   updateImage(polygonInJS, wallsInJs, options);
 });
@@ -109,7 +148,7 @@ document.getElementById("windowHeight").addEventListener("input", (e) => {
   windowHeight = parseFloat(v);
   wallsInJs = [
     // ...boxFromAABBWithHoleInTheTop([resolution * 0.1, resolution * 0.1, 0], [resolution * 0.9, resolution * 0.9, 400]),
-    ...inwardsBoxFromAABBWithwindow([options.sizeInMeters * (0.1 - OFFSET), options.sizeInMeters * (0.1 - OFFSET), 0], [options.sizeInMeters * (0.9 + OFFSET), options.sizeInMeters * (0.9 + OFFSET), 1e3], windowWidth, windowHeight)
+    ...inwardsBoxFromAABBWithwindow([options.sizeInMeters * (0.1 - OFFSET), options.sizeInMeters * (0.1 - OFFSET), 0], [options.sizeInMeters * (x + OFFSET), options.sizeInMeters * (y + OFFSET), 1e3], windowWidth, windowHeight)
   ];
   updateImage(polygonInJS, wallsInJs, options);
 });
@@ -135,12 +174,14 @@ document.getElementById("maxBouncesInput").addEventListener("input", (e) => {
   options = { ...options, samplesPerPoint: count };
   updateImage(polygonInJS, wallsInJs, options);
 });
-const updateCoordinate = (x, y) => {
+const updateCoordinate = (newX, newY) => {
   const htmlCanvas2 = document.getElementById("result_canvas");
-  const scaledX = x / htmlCanvas2.width * options.resolution;
-  const scaledY = y / htmlCanvas2.height * options.resolution;
-  updateWalls({ x: scaledX, y: options.resolution - scaledY });
-  updatePolygon({ x: scaledX, y: options.resolution - scaledY });
+  x = newX / htmlCanvas2.width;
+  y = 1 - newY / htmlCanvas2.height;
+  const scaledX = x * options.resolution;
+  const scaledY = y * options.resolution;
+  updateWalls({ x: scaledX, y: scaledY });
+  updatePolygon({ x: scaledX, y: scaledY });
   updateImage(polygonInJS, wallsInJs, options);
 };
 const updateImage = (polygonInJS2, wallsInJS, options2) => {
