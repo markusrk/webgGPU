@@ -104,7 +104,7 @@ export const init = async (input_canvas, options: Options) => {
 
   const initilizeGrid = ti.kernel(() => {
     for (let I of ti.ndrange(N, N)) {
-      points[I] = [I[0], I[1], 1] * gridIndexToMeter;
+      points[I] = [I[0]* gridIndexToMeter, I[1]* gridIndexToMeter, 1];
     }
   });
   initilizeGrid();
