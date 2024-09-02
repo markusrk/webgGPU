@@ -22,6 +22,7 @@ export type Options = {
   samplesPerPoint: number;
   triangleCount: number;
   sizeInMeters: number;
+  analysisPointHeight: number;
 };
 
 let N,
@@ -102,12 +103,12 @@ export const init = async (input_canvas, options: Options) => {
     intersectRayWithBin,
   });
 
-  const initilizeGrid = ti.kernel(() => {
+  const initilizeGrid = ti.kernel((analysisPointHeight) => {
     for (let I of ti.ndrange(N, N)) {
-      points[I] = [I[0]* gridIndexToMeter, I[1]* gridIndexToMeter, 1];
+      points[I] = [I[0]* gridIndexToMeter, I[1]* gridIndexToMeter, analysisPointHeight];
     }
   });
-  initilizeGrid();
+  initilizeGrid(options.analysisPointHeight || 1);
   colorPallet.fromArray(colorPalletJS);
 
   await initPolygon();
