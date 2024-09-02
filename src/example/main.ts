@@ -10,6 +10,7 @@ let options: Options = {
   resolution: 300,
   sizeInMeters: 100,
   samplesPerPoint: 1000,
+  analysisPointHeight: 1,
 };
 const resolutionParam = new URLSearchParams(window.location.search).get("resolution");
 if (resolutionParam) {
