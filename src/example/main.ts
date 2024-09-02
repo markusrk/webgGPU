@@ -8,10 +8,12 @@ let options: Options = {
   maxBounces: 4,
   triangleCount: 1000,
   resolution: 300,
-  sizeInMeters: 100,
+  bbox: {minx:0, maxx:100, miny:0, maxy:100},
   samplesPerPoint: 1000,
   analysisPointHeight: 1,
 };
+
+const sizeInMeters = 100;
 const resolutionParam = new URLSearchParams(window.location.search).get("resolution");
 if (resolutionParam) {
   const resolution = parseInt(resolutionParam);
@@ -24,28 +26,28 @@ let x = 0.9;
 let y = 0.9;
 
 let polygonInJS = [
-  [options.sizeInMeters * 0.1, options.sizeInMeters * 0.1],
-  [options.sizeInMeters * 0.1, options.sizeInMeters * 0.9],
-  [options.sizeInMeters * 0.9, options.sizeInMeters * 0.9],
-  [options.sizeInMeters * 0.9, options.sizeInMeters * 0.1],
-  [options.sizeInMeters * 0.1, options.sizeInMeters * 0.1],
+  [sizeInMeters * 0.1, sizeInMeters * 0.1],
+  [sizeInMeters * 0.1, sizeInMeters * 0.9],
+  [sizeInMeters * 0.9, sizeInMeters * 0.9],
+  [sizeInMeters * 0.9, sizeInMeters * 0.1],
+  [sizeInMeters * 0.1, sizeInMeters * 0.1],
 ] as [number, number][];
 
 const updatePolygon = (p: { x: number; y: number }) => {
   polygonInJS = [
-    [options.sizeInMeters * 0.1, options.sizeInMeters * 0.1],
-    [options.sizeInMeters * 0.1, (options.sizeInMeters * p.y) / options.resolution],
-    [(options.sizeInMeters * p.x) / options.resolution, (options.sizeInMeters * p.y) / options.resolution],
-    [(options.sizeInMeters * p.x) / options.resolution, options.sizeInMeters * 0.1],
-    [options.sizeInMeters * 0.1, options.sizeInMeters * 0.1],
+    [sizeInMeters * 0.1, sizeInMeters * 0.1],
+    [sizeInMeters * 0.1, (sizeInMeters * p.y) / options.resolution],
+    [(sizeInMeters * p.x) / options.resolution, (sizeInMeters * p.y) / options.resolution],
+    [(sizeInMeters * p.x) / options.resolution, sizeInMeters * 0.1],
+    [sizeInMeters * 0.1, sizeInMeters * 0.1],
   ];
 };
 
 let wallsInJs = [
   // ...boxFromAABBWithHoleInTheTop([resolution * 0.1, resolution * 0.1, 0], [resolution * 0.9, resolution * 0.9, 400]),
   ...inwardsBoxFromAABBWithwindow(
-    [options.sizeInMeters * (0.1 - OFFSET), options.sizeInMeters * (0.1 - OFFSET), 0],
-    [options.sizeInMeters * (0.9 + OFFSET), options.sizeInMeters * (0.9 + OFFSET), 1000],
+    [sizeInMeters * (0.1 - OFFSET), sizeInMeters * (0.1 - OFFSET), 0],
+    [sizeInMeters * (0.9 + OFFSET), sizeInMeters * (0.9 + OFFSET), 1000],
     windowWidth,
     windowHeight
   ),
@@ -54,10 +56,10 @@ let wallsInJs = [
 const updateWalls = (p: { x: number; y: number }) => {
   wallsInJs = [
     ...inwardsBoxFromAABBWithwindow(
-      [options.sizeInMeters * (0.1 - OFFSET), options.sizeInMeters * (0.1 - OFFSET), 0],
+      [sizeInMeters * (0.1 - OFFSET), sizeInMeters * (0.1 - OFFSET), 0],
       [
-        options.sizeInMeters * (p.x / options.resolution + OFFSET),
-        options.sizeInMeters * (p.y / options.resolution + OFFSET),
+        sizeInMeters * (p.x / options.resolution + OFFSET),
+        sizeInMeters * (p.y / options.resolution + OFFSET),
         1000,
       ],
       windowWidth,
@@ -72,8 +74,8 @@ document.getElementById("windowSize")!.addEventListener("input", (e) => {
   wallsInJs = [
     // ...boxFromAABBWithHoleInTheTop([resolution * 0.1, resolution * 0.1, 0], [resolution * 0.9, resolution * 0.9, 400]),
     ...inwardsBoxFromAABBWithwindow(
-      [options.sizeInMeters * (0.1 - OFFSET), options.sizeInMeters * (0.1 - OFFSET), 0],
-      [options.sizeInMeters * (x + OFFSET), options.sizeInMeters * (y + OFFSET), 1000],
+      [sizeInMeters * (0.1 - OFFSET), sizeInMeters * (0.1 - OFFSET), 0],
+      [sizeInMeters * (x + OFFSET), sizeInMeters * (y + OFFSET), 1000],
       windowWidth,
       windowHeight
     ),
@@ -86,8 +88,8 @@ document.getElementById("windowHeight")!.addEventListener("input", (e) => {
   wallsInJs = [
     // ...boxFromAABBWithHoleInTheTop([resolution * 0.1, resolution * 0.1, 0], [resolution * 0.9, resolution * 0.9, 400]),
     ...inwardsBoxFromAABBWithwindow(
-      [options.sizeInMeters * (0.1 - OFFSET), options.sizeInMeters * (0.1 - OFFSET), 0],
-      [options.sizeInMeters * (x + OFFSET), options.sizeInMeters * (y + OFFSET), 1000],
+      [sizeInMeters * (0.1 - OFFSET), sizeInMeters * (0.1 - OFFSET), 0],
+      [sizeInMeters * (x + OFFSET), sizeInMeters * (y + OFFSET), 1000],
       windowWidth,
       windowHeight
     ),

@@ -21,7 +21,7 @@ export type Options = {
   resolution: number;
   samplesPerPoint: number;
   triangleCount: number;
-  sizeInMeters: number;
+  bbox: {minx: number, miny: number, maxx: number, maxy: number};
   analysisPointHeight: number;
 };
 
@@ -73,7 +73,7 @@ export const init = async (input_canvas, options: Options) => {
   pixels = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
   traceCount = ti.field(ti.i32, [N, N]) as ti.Field;
   initializeReflectivityAndBounces({ reflectivity: 0.7, bounces: 6 });
-  const gridIndexToMeter = options.sizeInMeters / options.resolution;
+
 
   ti.addToKernelScope({
     points,
@@ -94,7 +94,6 @@ export const init = async (input_canvas, options: Options) => {
     intersectRayWithGeometry,
     intersectRayWithAcceleratedGeometry,
     findMinMax,
-    gridIndexToMeter,
     aggregateBins,
     reflectivityAndBouncesParams,
     countTriangles,
@@ -103,12 +102,14 @@ export const init = async (input_canvas, options: Options) => {
     intersectRayWithBin,
   });
 
-  const initilizeGrid = ti.kernel((analysisPointHeight) => {
+  const initilizeGrid = ti.kernel({bbox: ti.types.struct({minx: ti.f32, maxx: ti.f32, miny: ti.f32, maxy: ti.f32})},(analysisPointHeight,bbox,resolution) => {
+    const gridIndexToMeterX = (bbox.maxx-bbox.minx) / resolution;
+    const gridIndexToMeterY = (bbox.maxy-bbox.miny) / resolution;
     for (let I of ti.ndrange(N, N)) {
-      points[I] = [I[0]* gridIndexToMeter, I[1]* gridIndexToMeter, analysisPointHeight];
+      points[I] = [I[0]* gridIndexToMeterX, I[1]* gridIndexToMeterY, analysisPointHeight];
     }
   });
-  initilizeGrid(options.analysisPointHeight || 1);
+  initilizeGrid(options.analysisPointHeight || 1, options.bbox, options.resolution);
   colorPallet.fromArray(colorPalletJS);
 
   await initPolygon();
@@ -123,7 +124,7 @@ export const initializeSurroundings = async (options: Options) => {
   }
 
   let startTime = performance.now();
-  const { vertices, indices } = await initRandomTriangles(options.triangleCount, options.sizeInMeters);
+  const { vertices, indices } = await initRandomTriangles(options.triangleCount, options.bbox.maxx - options.bbox.minx);
   console.log("init vertices", performance.now() - startTime);
 
   startTime = performance.now();
