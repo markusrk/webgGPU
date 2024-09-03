@@ -34,7 +34,8 @@ let N,
   traceKernel,
   updateTexture,
   updateScoresMask,
-  reflectivityAndBouncesParams;
+  reflectivityAndBouncesParams,
+  render;
 let options = {} as Options;
 let isInitialized = false;
 
@@ -64,7 +65,8 @@ const setReflectivityAndBounces = ({ reflectivity, bounces }) => {
 export const init = async (input_canvas, options: Options) => {
   htmlCanvas = input_canvas;
   await ti.init();
-  canvas = new ti.Canvas(htmlCanvas);
+
+
   N = options.resolution;
 
   points = ti.Vector.field(3, ti.f32, [N, N]) as ti.Field;
@@ -101,6 +103,32 @@ export const init = async (input_canvas, options: Options) => {
     triangleTouchesBBox,
     intersectRayWithBin,
   });
+
+  let renderTarget = ti.canvasTexture(htmlCanvas);
+  let drawingVertices = ti.Vector.field(2, ti.f32, [6]) as ti.Field;
+  await drawingVertices.fromArray([
+    [-1, -1],
+    [1, -1],
+    [-1, 1],
+    [1, -1],
+    [1, 1],
+    [-1, 1],
+]);
+  ti.addToKernelScope({renderTarget,drawingVertices})
+
+  render = ti.kernel(() => {
+    ti.clearColor(renderTarget, [0.0, 0.0, 0.0, 1.0]);
+    for (let v of ti.inputVertices(drawingVertices)) {
+        ti.outputPosition([v.x, v.y, 0.0, 1.0]);
+        ti.outputVertex(v);
+    }
+    for (let f of ti.inputFragments()) {
+      let coord = (f + 1) / 2.0;
+      let texelIndex = ti.i32(coord * (pixels.dimensions - 1));
+      let color = pixels[texelIndex].rgb;
+      ti.outputColor(renderTarget, color.concat([1.0]));
+    }
+});
 
   const initilizeGrid = ti.kernel({bbox: ti.types.struct({minx: ti.f32, maxx: ti.f32, miny: ti.f32, maxy: ti.f32})},(analysisPointHeight,bbox,resolution) => {
     const gridIndexToMeterX = (bbox.maxx-bbox.minx) / resolution;
@@ -334,7 +362,7 @@ export const rayTrace = async (polygonInJS: [number, number][], trianglesInJS: T
     if (thisToken !== currentToken) {
       return;
     }
-    canvas.setImage(pixels);
+    render();
     i < steps && requestAnimationFrame(frame);
   }
   if (thisToken !== currentToken) {
