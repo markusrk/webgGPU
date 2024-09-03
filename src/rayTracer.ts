@@ -106,7 +106,7 @@ export const init = async (input_canvas, options: Options) => {
     const gridIndexToMeterX = (bbox.maxx-bbox.minx) / resolution;
     const gridIndexToMeterY = (bbox.maxy-bbox.miny) / resolution;
     for (let I of ti.ndrange(N, N)) {
-      points[I] = [I[0]* gridIndexToMeterX, I[1]* gridIndexToMeterY, analysisPointHeight];
+      points[I] = [I[0]* gridIndexToMeterX+ bbox.minx, I[1]* gridIndexToMeterY+bbox.miny, analysisPointHeight];
     }
   });
   initilizeGrid(options.analysisPointHeight || 1, options.bbox, options.resolution);
