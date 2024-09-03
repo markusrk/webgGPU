@@ -19,7 +19,7 @@ export const loadPolygon = async (polygonInJS: [number, number][]) => {
   
   return polygonLength;
 };
-const MAX_TRIANGLE_LENGTH = 100; 
+const MAX_TRIANGLE_LENGTH = 400; 
 const triangles = ti.Vector.field(3, ti.f32, [MAX_TRIANGLE_LENGTH, 3]);
 
 export const initTriangle = async () => {
