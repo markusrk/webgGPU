@@ -347,7 +347,6 @@ export const rayTrace = async (polygonInJS: [number, number][], trianglesInJS: T
     i = i + 1;
     const start = performance.now();
     await traceKernel(tracesPerStep, false, trianglesInJS.length);
-    i % 10 === 1 && console.log("raytrace", i, " : ", performance.now() - start);
     if (thisToken !== currentToken) {
       return;
     }
@@ -358,11 +357,11 @@ export const rayTrace = async (polygonInJS: [number, number][], trianglesInJS: T
     );
     const floatingVersion = Math.sqrt(sampleTarget / i);
     const fade = Math.min((floatingVersion - averageacross / 2) / (averageacross - averageacross / 2), 1);
-    updateTexture(averageacross, fade);
+    await updateTexture(averageacross, fade);
     if (thisToken !== currentToken) {
       return;
     }
-    render();
+    await render();
     i < steps && requestAnimationFrame(frame);
   }
   if (thisToken !== currentToken) {
