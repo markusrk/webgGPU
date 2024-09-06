@@ -15,15 +15,20 @@ const MAX_DAYLIGHT = 12.641899784120097;
 
 let currentToken = undefined; // Step 1: Initialize a unique symbol as the cancellation token
 
-export type Options = {
-  materialReflectivity: number;
-  maxBounces: number;
-  resolution: number;
-  samplesPerPoint: number;
-  triangleCount: number;
-  bbox: {minx: number, miny: number, maxx: number, maxy: number};
+
+export type InitOptions = {
   analysisPointHeight: number;
-};
+  resolution: number
+  bbox: { minX: number; maxX: number; minY: number; maxY: number }
+}
+export type RunOptions = {
+  materialReflectivity: number
+  samplesPerPoint: number
+  triangleCount: number
+  maxBounces: number
+
+}
+
 
 let N,
   points,
@@ -36,11 +41,9 @@ let N,
   updateScoresMask,
   reflectivityAndBouncesParams,
   render;
-let options = {} as Options;
 let isInitialized = false;
 
 let htmlCanvas;
-let canvas;
 
 const colorPalletJS = [
   [1, 0, 0, 0],
@@ -62,7 +65,7 @@ const setReflectivityAndBounces = ({ reflectivity, bounces }) => {
 };
 
 
-export const init = async (input_canvas, options: Options) => {
+export const init = async (input_canvas, options: InitOptions) => {
   htmlCanvas = input_canvas;
   await ti.init();
 
@@ -130,11 +133,11 @@ export const init = async (input_canvas, options: Options) => {
     }
 });
 
-  const initilizeGrid = ti.kernel({bbox: ti.types.struct({minx: ti.f32, maxx: ti.f32, miny: ti.f32, maxy: ti.f32})},(analysisPointHeight,bbox,resolution) => {
-    const gridIndexToMeterX = (bbox.maxx-bbox.minx) / resolution;
-    const gridIndexToMeterY = (bbox.maxy-bbox.miny) / resolution;
+  const initilizeGrid = ti.kernel({bbox: ti.types.struct({minX: ti.f32, maxX: ti.f32, minY: ti.f32, maxY: ti.f32})},(analysisPointHeight,bbox,resolution) => {
+    const gridIndexToMeterX = (bbox.maxX-bbox.minX) / resolution;
+    const gridIndexToMeterY = (bbox.maxY-bbox.minY) / resolution;
     for (let I of ti.ndrange(N, N)) {
-      points[I] = [I[0]* gridIndexToMeterX+ bbox.minx, I[1]* gridIndexToMeterY+bbox.miny, analysisPointHeight];
+      points[I] = [I[0]* gridIndexToMeterX+ bbox.minX, I[1]* gridIndexToMeterY+bbox.minY, analysisPointHeight];
     }
   });
   initilizeGrid(options.analysisPointHeight || 1, options.bbox, options.resolution);
@@ -146,13 +149,13 @@ export const init = async (input_canvas, options: Options) => {
   isInitialized = true;
 };
 
-export const initializeSurroundings = async (options: Options) => {
+export const initializeSurroundings = async (options: InitOptions) => {
   if (!isInitialized) {
     console.log("Triggered preComputeSurroundings before initialization was done!!!");
   }
 
   let startTime = performance.now();
-  const { vertices, indices } = await initRandomTriangles(options.triangleCount, options.bbox.maxx - options.bbox.minx);
+  const { vertices, indices } = await initRandomTriangles(options.triangleCount, options.bbox.maxX - options.bbox.minX);
   console.log("init vertices", performance.now() - startTime);
 
   startTime = performance.now();
@@ -283,7 +286,7 @@ export const initializeSurroundings = async (options: Options) => {
   });
 };
 
-export const rayTrace = async (polygonInJS: [number, number][], trianglesInJS: Triangle[], currentOptions: Options) => {
+export const rayTrace = async (polygonInJS: [number, number][], trianglesInJS: Triangle[], currentOptions: RunOptions) => {
   if (!isInitialized) {
     console.log("Triggered rayTrace before initialization was done!!!");
   }
@@ -300,10 +303,10 @@ export const rayTrace = async (polygonInJS: [number, number][], trianglesInJS: T
   // }
   setReflectivityAndBounces({ reflectivity: currentOptions.materialReflectivity, bounces: currentOptions.maxBounces });
 
-  if (currentOptions.triangleCount && currentOptions.triangleCount !== options.triangleCount) {
-    options.triangleCount = currentOptions.triangleCount;
-    initializeSurroundings(currentOptions);
-  }
+  // if (currentOptions.triangleCount && currentOptions.triangleCount !== options.triangleCount) {
+  //   options.triangleCount = currentOptions.triangleCount;
+  //   initializeSurroundings(currentOptions);
+  // }
   let start = performance.now();
   const polygonLengthPromise = loadPolygon(polygonInJS).then((_) => {
     console.log("loadPolygon", performance.now() - start);
@@ -345,7 +348,6 @@ export const rayTrace = async (polygonInJS: [number, number][], trianglesInJS: T
       return;
     }
     i = i + 1;
-    const start = performance.now();
     await traceKernel(tracesPerStep, false, trianglesInJS.length);
     if (thisToken !== currentToken) {
       return;
